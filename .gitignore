@@ -1,0 +1,84 @@
+# Build outputs
+Build/
+Intermediate/
+bin/
+obj/
+output/
+temp/
+artifacts/
+Debug/
+Release/
+packages/
+paket-files/
+.tmp/
+
+# Visual Studio
+*.vs/
+*.vscode/
+*.user
+*.opensdf
+*.sdf
+*.suo
+*.pdb
+*.dll
+*.ncb
+*_wpftmp.csproj
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# IDE
+.idea/
+.vscode/
+
+# Temp files
+*.tmp
+*.temp
+*.received.txt
+
+# Designer
+FAML.Designer.settings
+.nuke/build.schema.json
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js (in case you add any Node.js tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (in case you add any Python tooling)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.env
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Local development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
