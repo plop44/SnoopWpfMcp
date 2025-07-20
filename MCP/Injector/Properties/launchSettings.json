@@ -1,0 +1,23 @@
+{
+  "profiles": {
+    "MCP Server": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "launchBrowser": false
+    },
+    "MCP Server (Wait for Debugger)": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "WAIT_FOR_DEBUGGER": "true"
+      },
+      "launchBrowser": false
+    },
+    "Legacy Injector": {
+      "commandName": "Project",
+      "commandLineArgs": "38328"
+    }
+  }
+}

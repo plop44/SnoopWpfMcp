@@ -1,0 +1,47 @@
+<Window x:Class="TestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="WPF Test Application" Height="400" Width="600">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock Grid.Row="0" Text="WPF Test Application for Injection Testing" 
+                   FontSize="16" FontWeight="Bold" Margin="10" 
+                   HorizontalAlignment="Center"/>
+        
+        <StackPanel Grid.Row="1" Margin="20">
+            <TextBlock Text="This is a simple WPF application used to test the WpfInspector injection." 
+                       TextWrapping="Wrap" Margin="0,0,0,10"/>
+            
+            <TextBlock x:Name="ProcessInfoText" FontWeight="Bold" Margin="0,0,0,10"/>
+            
+            <TextBlock x:Name="ClickCounterText" Text="Button clicks: 0" 
+                       FontWeight="Bold" Foreground="Blue" Margin="0,0,0,10"/>
+            
+            <Button x:Name="UpdateButton" Content="Update UI" Width="100" Height="30" 
+                    HorizontalAlignment="Left" Click="UpdateButton_Click" Margin="0,0,0,10"/>
+            
+            <TextBlock Text="Instructions:" FontWeight="Bold" Margin="0,10,0,5"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,5">
+                1. Keep this application running
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,5">
+                2. Note the Process ID displayed above
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,5">
+                3. Run the Injector with this Process ID: Injector.exe [ProcessId]
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,5">
+                4. The injector should inject WpfInspector and receive a "PONG" response to its "PING"
+            </TextBlock>
+        </StackPanel>
+        
+        <TextBlock Grid.Row="2" Text="Ready for injection testing..." 
+                   FontStyle="Italic" Margin="10" 
+                   HorizontalAlignment="Center"/>
+    </Grid>
+</Window>
