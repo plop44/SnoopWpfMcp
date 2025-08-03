@@ -7,24 +7,21 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Injector.Models;
 using Microsoft.Extensions.Logging;
+using SnoopWpfMcpServer.Models;
 
-namespace Injector.Services
+namespace SnoopWpfMcpServer.Services
 {
     public interface IInjectionService
     {
-        Task<InjectionResult> InjectAndPingAsync(int processId);
-        Task<bool> IsAlreadyInjectedAsync(int processId);
-        Task<ButtonClickResult> ClickButtonAsync(int processId, string buttonText);
-        Task<ButtonClickResult> FindInjectAndClickButtonAsync(string processIdentifier, string buttonText, bool isProcessId = false);
-        Task<CommandResult> RunCommandAsync(int processId, string elementType, int hashcode, string command, string? parameters = null);
-        Task<CommandResult> FindInjectAndRunCommandAsync(string processIdentifier, string elementType, int hashcode, string command, string? parameters = null, bool isProcessId = false);
+        Task<InjectionResult> PingAsync(int processId);
+        Task<AutomationPeerResult> InvokeAutomationPeerAsync(int processId, string type, int hashcode, string action, string? parameters = null);
         Task<ScreenshotResult> TakeScreenshotAsync(int processId);
-        Task<ScreenshotResult> FindInjectAndTakeScreenshotAsync(string processIdentifier, bool isProcessId = false);
         Task<VisualTreeResult> GetVisualTreeAsync(int processId);
+        Task<ElementResult> GetElementByHashcodeAsync(int processId, string type, int hashcode);
     }
 
     public class InjectionService : IInjectionService
@@ -39,7 +36,16 @@ namespace Injector.Services
             _processService = processService;
         }
 
-        public async Task<InjectionResult> InjectAndPingAsync(int processId)
+        private static JsonSerializerOptions GetJsonOptions()
+        {
+            return new JsonSerializerOptions
+            {
+                WriteIndented = false,
+                NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
+            };
+        }
+
+        public async Task<InjectionResult> PingAsync(int processId)
         {
             _logger.LogInformation($"Starting injection and ping for process {processId}");
 
@@ -146,7 +152,7 @@ namespace Injector.Services
             }
         }
 
-        public async Task<bool> IsAlreadyInjectedAsync(int processId)
+        private async Task<bool> IsAlreadyInjectedAsync(int processId)
         {
             // Check our internal tracking
             if (_injectedProcesses.ContainsKey(processId))
@@ -167,9 +173,9 @@ namespace Injector.Services
             return false;
         }
 
-        public async Task<ButtonClickResult> ClickButtonAsync(int processId, string buttonText)
+        public async Task<AutomationPeerResult> InvokeAutomationPeerAsync(int processId, string type, int hashcode, string action, string? parameters = null)
         {
-            _logger.LogInformation($"Starting button click for process {processId}, button text: '{buttonText}'");
+            _logger.LogInformation($"Starting automation peer action for process {processId}, element type: '{type}', hashcode: {hashcode}, action: '{action}'");
 
             try
             {
@@ -177,120 +183,13 @@ namespace Injector.Services
                 var process = GetProcess(processId);
                 if (process == null)
                 {
-                    return new ButtonClickResult
+                    return new AutomationPeerResult
                     {
                         Success = false,
                         ProcessId = processId,
-                        ButtonText = buttonText,
-                        Message = $"Process with ID {processId} not found",
-                        Error = "Process not found"
-                    };
-                }
-
-                _logger.LogInformation($"Target process: {process.ProcessName} (PID: {process.Id})");
-
-                // Check if already injected
-                var alreadyInjected = await IsAlreadyInjectedAsync(processId);
-                var wasInjected = false;
-
-                if (!alreadyInjected)
-                {
-                    // Perform injection
-                    _logger.LogInformation($"Injecting WpfInspector into process {processId}");
-                    var injectionSuccess = await InjectWpfInspectorAsync(processId);
-                    
-                    if (!injectionSuccess)
-                    {
-                        return new ButtonClickResult
-                        {
-                            Success = false,
-                            ProcessId = processId,
-                            ButtonText = buttonText,
-                            Message = "Failed to inject WpfInspector",
-                            Error = "Injection failed"
-                        };
-                    }
-
-                    _logger.LogInformation($"WpfInspector injected successfully into process {processId}");
-                    _injectedProcesses[processId] = DateTime.UtcNow;
-                    wasInjected = true;
-
-                    // Wait for pipe server to start
-                    _logger.LogInformation("Waiting for pipe server to start...");
-                    await Task.Delay(2000);
-                }
-
-                // Send button click command
-                _logger.LogInformation($"Sending button click command to process {processId}");
-                var response = await SendButtonClickCommandAsync(processId, buttonText);
-                
-                if (response == null)
-                {
-                    return new ButtonClickResult
-                    {
-                        Success = false,
-                        ProcessId = processId,
-                        ButtonText = buttonText,
-                        Message = "No response received from WpfInspector",
-                        Error = "Communication timeout",
-                        WasInjected = wasInjected
-                    };
-                }
-
-                // Parse the JSON response
-                using var doc = JsonDocument.Parse(response);
-                var root = doc.RootElement;
-                
-                var success = root.TryGetProperty("success", out var successElement) ? successElement.GetBoolean() : false;
-                var message = root.TryGetProperty("message", out var messageElement) ? messageElement.GetString() ?? "" : "";
-                var error = root.TryGetProperty("error", out var errorElement) ? errorElement.GetString() : null;
-                var buttonName = root.TryGetProperty("buttonName", out var buttonNameElement) ? buttonNameElement.GetString() : null;
-                var buttonContent = root.TryGetProperty("buttonContent", out var buttonContentElement) ? buttonContentElement.GetString() : null;
-
-                return new ButtonClickResult
-                {
-                    Success = success,
-                    ProcessId = processId,
-                    ButtonText = buttonText,
-                    Message = success ? message : (error ?? "Unknown error"),
-                    Error = success ? null : (error ?? "Unknown error"),
-                    ButtonName = buttonName,
-                    ButtonContent = buttonContent,
-                    WasInjected = wasInjected
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error during button click for process {processId}");
-                
-                return new ButtonClickResult
-                {
-                    Success = false,
-                    ProcessId = processId,
-                    ButtonText = buttonText,
-                    Message = "Exception occurred during button click",
-                    Error = ex.Message
-                };
-            }
-        }
-
-        public async Task<CommandResult> RunCommandAsync(int processId, string elementType, int hashcode, string command, string? parameters = null)
-        {
-            _logger.LogInformation($"Starting command execution for process {processId}, element type: '{elementType}', hashcode: {hashcode}, command: '{command}'");
-
-            try
-            {
-                // Check if process exists
-                var process = GetProcess(processId);
-                if (process == null)
-                {
-                    return new CommandResult
-                    {
-                        Success = false,
-                        ProcessId = processId,
-                        ElementType = elementType,
+                        Type = type,
                         Hashcode = hashcode,
-                        Command = command,
+                        Action = action,
                         Message = $"Process with ID {processId} not found",
                         Error = "Process not found"
                     };
@@ -300,7 +199,6 @@ namespace Injector.Services
 
                 // Check if already injected
                 var alreadyInjected = await IsAlreadyInjectedAsync(processId);
-                var wasInjected = false;
 
                 if (!alreadyInjected)
                 {
@@ -310,29 +208,28 @@ namespace Injector.Services
                     
                     if (!injectionSuccess)
                     {
-                        return new CommandResult
+                        return new AutomationPeerResult
                         {
                             Success = false,
                             ProcessId = processId,
-                            ElementType = elementType,
+                            Type = type,
                             Hashcode = hashcode,
-                            Command = command,
+                            Action = action,
                             Message = "Failed to inject WpfInspector",
                             Error = "Injection failed"
                         };
                     }
 
-                    wasInjected = true;
                     _logger.LogInformation($"Successfully injected WpfInspector into process {processId}");
                 }
 
-                // Create command data
+                // Create automation peer command data
                 var commandData = new
                 {
-                    commandType = "RUN_COMMAND",
-                    type = elementType,
+                    commandType = "INVOKE_AUTOMATION_PEER",
+                    type = type,
                     hashcode = hashcode,
-                    command = command
+                    action = action
                 };
 
                 // Add parameters if provided
@@ -345,10 +242,10 @@ namespace Injector.Services
                         var paramsDict = new Dictionary<string, object>();
                         
                         // Copy basic command properties
-                        paramsDict["commandType"] = "RUN_COMMAND";
-                        paramsDict["type"] = elementType;
+                        paramsDict["commandType"] = "INVOKE_AUTOMATION_PEER";
+                        paramsDict["type"] = type;
                         paramsDict["hashcode"] = hashcode;
-                        paramsDict["command"] = command;
+                        paramsDict["action"] = action;
                         
                         // Add additional parameters
                         foreach (var prop in paramsDoc.RootElement.EnumerateObject())
@@ -369,21 +266,20 @@ namespace Injector.Services
                     finalCommandData = commandData;
                 }
 
-                _logger.LogInformation($"Executing command on process {processId}");
+                _logger.LogInformation($"Executing automation peer action on process {processId}");
                 var response = await SendRunCommandAsync(processId, finalCommandData);
 
                 if (string.IsNullOrWhiteSpace(response))
                 {
-                    return new CommandResult
+                    return new AutomationPeerResult
                     {
                         Success = false,
                         ProcessId = processId,
-                        ElementType = elementType,
+                        Type = type,
                         Hashcode = hashcode,
-                        Command = command,
+                        Action = action,
                         Message = "No response received from WpfInspector",
-                        Error = "Communication timeout or failure",
-                        WasInjected = wasInjected
+                        Error = "Communication timeout or failure"
                     };
                 }
 
@@ -396,31 +292,30 @@ namespace Injector.Services
                 var error = root.TryGetProperty("error", out var errorElement) ? errorElement.GetString() : null;
                 var result = root.TryGetProperty("result", out var resultElement) ? resultElement.GetRawText() : null;
 
-                return new CommandResult
+                return new AutomationPeerResult
                 {
                     Success = success,
                     ProcessId = processId,
-                    ElementType = elementType,
+                    Type = type,
                     Hashcode = hashcode,
-                    Command = command,
+                    Action = action,
                     Message = success ? message : (error ?? "Unknown error"),
                     Error = success ? null : (error ?? "Unknown error"),
-                    Result = result,
-                    WasInjected = wasInjected
+                    Result = result
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error during command execution for process {processId}");
+                _logger.LogError(ex, $"Error during automation peer action for process {processId}");
                 
-                return new CommandResult
+                return new AutomationPeerResult
                 {
                     Success = false,
                     ProcessId = processId,
-                    ElementType = elementType,
+                    Type = type,
                     Hashcode = hashcode,
-                    Command = command,
-                    Message = "Exception occurred during command execution",
+                    Action = action,
+                    Message = "Exception occurred during automation peer action",
                     Error = ex.Message
                 };
             }
@@ -449,7 +344,6 @@ namespace Injector.Services
 
                 // Check if already injected
                 var alreadyInjected = await IsAlreadyInjectedAsync(processId);
-                var wasInjected = false;
 
                 if (!alreadyInjected)
                 {
@@ -470,7 +364,6 @@ namespace Injector.Services
 
                     _logger.LogInformation($"WpfInspector injected successfully into process {processId}");
                     _injectedProcesses[processId] = DateTime.UtcNow;
-                    wasInjected = true;
 
                     // Wait for pipe server to start
                     _logger.LogInformation("Waiting for pipe server to start...");
@@ -520,8 +413,7 @@ namespace Injector.Services
                     Width = width,
                     Height = height,
                     ImageData = imageData,
-                    Format = format,
-                    WasInjected = wasInjected
+                    Format = format
                 };
             }
             catch (Exception ex)
@@ -566,7 +458,7 @@ namespace Injector.Services
                 {
                     _logger.LogInformation($"WpfInspector not yet injected into process {processId}, injecting now...");
                     
-                    var injectionResult = await InjectAndPingAsync(processId);
+                    var injectionResult = await PingAsync(processId);
                     if (!injectionResult.Success)
                     {
                         return new VisualTreeResult
@@ -622,103 +514,134 @@ namespace Injector.Services
             }
         }
 
-        public async Task<ScreenshotResult> FindInjectAndTakeScreenshotAsync(string processIdentifier, bool isProcessId = false)
+        public async Task<ElementResult> GetElementByHashcodeAsync(int processId, string type, int hashcode)
         {
-            _logger.LogInformation($"Starting find, inject and screenshot for process identifier: '{processIdentifier}' (isProcessId: {isProcessId})");
+            _logger.LogInformation($"Starting element retrieval for process {processId}, type: '{type}', hashcode: {hashcode}");
 
             try
             {
-                WpfProcessInfo? targetProcess = null;
-
-                if (isProcessId)
+                // Check if process exists
+                var process = GetProcess(processId);
+                if (process == null)
                 {
-                    // Try to parse as process ID
-                    if (int.TryParse(processIdentifier, out var pid))
+                    return new ElementResult
                     {
-                        var allProcesses = await _processService.GetWpfProcessesAsync();
-                        targetProcess = allProcesses.FirstOrDefault(p => p.ProcessId == pid);
-                        
-                        if (targetProcess == null)
-                        {
-                            return new ScreenshotResult
-                            {
-                                Success = false,
-                                ProcessId = pid,
-                                Message = $"No WPF process found with ID {pid}",
-                                Error = "Process not found"
-                            };
-                        }
-                    }
-                    else
-                    {
-                        return new ScreenshotResult
-                        {
-                            Success = false,
-                            ProcessId = 0,
-                            Message = $"Invalid process ID format: '{processIdentifier}'",
-                            Error = "Invalid process ID"
-                        };
-                    }
+                        Success = false,
+                        ProcessId = processId,
+                        Type = type,
+                        Hashcode = hashcode,
+                        Message = $"Process with ID {processId} not found",
+                        Error = "Process not found"
+                    };
                 }
-                else
+
+                _logger.LogInformation($"Target process: {process.ProcessName} (PID: {process.Id})");
+
+                // Check if already injected
+                var alreadyInjected = await IsAlreadyInjectedAsync(processId);
+
+                if (!alreadyInjected)
                 {
-                    // Find process by name or window title
-                    var allProcesses = await _processService.GetWpfProcessesAsync();
+                    // Perform injection
+                    _logger.LogInformation($"Injecting WpfInspector into process {processId}");
+                    var injectionSuccess = await InjectWpfInspectorAsync(processId);
                     
-                    // First try exact match on process name
-                    targetProcess = allProcesses.FirstOrDefault(p => 
-                        string.Equals(p.ProcessName, processIdentifier, StringComparison.OrdinalIgnoreCase));
-
-                    // If not found, try partial match on process name
-                    if (targetProcess == null)
+                    if (!injectionSuccess)
                     {
-                        targetProcess = allProcesses.FirstOrDefault(p => 
-                            p.ProcessName.Contains(processIdentifier, StringComparison.OrdinalIgnoreCase));
-                    }
-
-                    // If still not found, try window title
-                    if (targetProcess == null)
-                    {
-                        targetProcess = allProcesses.FirstOrDefault(p => 
-                            !string.IsNullOrEmpty(p.MainWindowTitle) && 
-                            p.MainWindowTitle.Contains(processIdentifier, StringComparison.OrdinalIgnoreCase));
-                    }
-
-                    if (targetProcess == null)
-                    {
-                        var availableProcesses = allProcesses.Take(10).Select(p => $"{p.ProcessName} ({p.ProcessId})").ToList();
-                        var processList = availableProcesses.Any() 
-                            ? $"Available processes (first 10): {string.Join(", ", availableProcesses)}"
-                            : "No WPF processes found";
-
-                        return new ScreenshotResult
+                        return new ElementResult
                         {
                             Success = false,
-                            ProcessId = 0,
-                            Message = $"No WPF process found matching '{processIdentifier}'. {processList}",
-                            Error = "Process not found"
+                            ProcessId = processId,
+                            Type = type,
+                            Hashcode = hashcode,
+                            Message = "Failed to inject WpfInspector",
+                            Error = "Injection failed"
                         };
                     }
+
+                    _logger.LogInformation($"Successfully injected WpfInspector into process {processId}");
+                    _injectedProcesses[processId] = DateTime.UtcNow;
+
+                    // Wait for pipe server to start
+                    _logger.LogInformation("Waiting for pipe server to start...");
+                    await Task.Delay(2000);
                 }
 
-                _logger.LogInformation($"Found target process: {targetProcess.ProcessName} (PID: {targetProcess.ProcessId})");
+                // Create get element command data
+                var commandData = new
+                {
+                    commandType = "GET_ELEMENT_BY_HASHCODE",
+                    type = type,
+                    hashcode = hashcode
+                };
 
-                // Now take the screenshot
-                return await TakeScreenshotAsync(targetProcess.ProcessId);
+                _logger.LogInformation($"Executing get element by hashcode on process {processId}");
+                var response = await SendRunCommandAsync(processId, commandData);
+
+                if (string.IsNullOrWhiteSpace(response))
+                {
+                    return new ElementResult
+                    {
+                        Success = false,
+                        ProcessId = processId,
+                        Type = type,
+                        Hashcode = hashcode,
+                        Message = "No response received from WpfInspector",
+                        Error = "Communication timeout or failure"
+                    };
+                }
+
+                // Parse the JSON response
+                using var doc = JsonDocument.Parse(response);
+                var root = doc.RootElement;
+                
+                var success = root.TryGetProperty("success", out var successElement) ? successElement.GetBoolean() : false;
+                var message = root.TryGetProperty("message", out var messageElement) ? messageElement.GetString() ?? "" : "";
+                var error = root.TryGetProperty("error", out var errorElement) ? errorElement.GetString() : null;
+                var timestamp = root.TryGetProperty("timestamp", out var timestampElement) ? timestampElement.GetString() : null;
+                
+                // Get the element and dataContexts objects
+                object? element = null;
+                if (root.TryGetProperty("element", out var elementElement) && elementElement.ValueKind != JsonValueKind.Null)
+                {
+                    element = JsonSerializer.Deserialize<object>(elementElement.GetRawText());
+                }
+
+                object? dataContexts = null;
+                if (root.TryGetProperty("dataContexts", out var dataContextsElement) && dataContextsElement.ValueKind != JsonValueKind.Null)
+                {
+                    dataContexts = JsonSerializer.Deserialize<object>(dataContextsElement.GetRawText());
+                }
+
+                return new ElementResult
+                {
+                    Success = success,
+                    ProcessId = processId,
+                    Type = type,
+                    Hashcode = hashcode,
+                    Message = success ? message : (error ?? "Unknown error"),
+                    Error = success ? null : (error ?? "Unknown error"),
+                    Element = element,
+                    DataContexts = dataContexts,
+                    Timestamp = timestamp
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error during find, inject and screenshot for '{processIdentifier}'");
+                _logger.LogError(ex, $"Error during element retrieval for process {processId}");
                 
-                return new ScreenshotResult
+                return new ElementResult
                 {
                     Success = false,
-                    ProcessId = 0,
-                    Message = "Exception occurred during find, inject and screenshot",
+                    ProcessId = processId,
+                    Type = type,
+                    Hashcode = hashcode,
+                    Message = "Exception occurred during element retrieval",
                     Error = ex.Message
                 };
             }
         }
+
 
         private Process? GetProcess(int processId)
         {
@@ -860,63 +783,6 @@ namespace Injector.Services
             }
         }
 
-        private async Task<string?> SendButtonClickCommandAsync(int processId, string buttonText, TimeSpan? timeout = null)
-        {
-            var actualTimeout = timeout ?? TimeSpan.FromSeconds(15);
-            var pipeName = $"WpfInspector_{processId}";
-
-            try
-            {
-                using var cts = new CancellationTokenSource(actualTimeout);
-                
-                _logger.LogDebug($"Connecting to named pipe: {pipeName}");
-                
-                using var pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut);
-                
-                // Try to connect with timeout
-                await pipeClient.ConnectAsync(cts.Token);
-                _logger.LogDebug("Connected to pipe successfully");
-
-                // Create button click command
-                var command = new
-                {
-                    command = "CLICK_BUTTON",
-                    buttonText = buttonText
-                };
-
-                var commandJson = JsonSerializer.Serialize(command);
-                var messageBytes = Encoding.UTF8.GetBytes(commandJson);
-                await pipeClient.WriteAsync(messageBytes, 0, messageBytes.Length, cts.Token);
-                await pipeClient.FlushAsync(cts.Token);
-                
-                _logger.LogDebug($"Sent command: {commandJson}");
-
-                // Read response
-                var buffer = new byte[4096]; // Larger buffer for JSON response
-                var bytesRead = await pipeClient.ReadAsync(buffer, 0, buffer.Length, cts.Token);
-                
-                var response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                _logger.LogDebug($"Received response: {response}");
-                
-                return response;
-            }
-            catch (TimeoutException)
-            {
-                _logger.LogDebug($"Button click command timeout after {actualTimeout.TotalSeconds} seconds");
-                return null;
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogDebug($"Button click command cancelled after {actualTimeout.TotalSeconds} seconds");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug($"Error during button click command: {ex.Message}");
-                return null;
-            }
-        }
-
         private async Task<string?> SendScreenshotCommandAsync(int processId, TimeSpan? timeout = null)
         {
             var actualTimeout = timeout ?? TimeSpan.FromSeconds(15);
@@ -940,7 +806,7 @@ namespace Injector.Services
                     command = "TAKE_SCREENSHOT"
                 };
 
-                var commandJson = JsonSerializer.Serialize(command);
+                var commandJson = JsonSerializer.Serialize(command, GetJsonOptions());
                 var messageBytes = Encoding.UTF8.GetBytes(commandJson);
                 await pipeClient.WriteAsync(messageBytes, 0, messageBytes.Length, cts.Token);
                 await pipeClient.FlushAsync(cts.Token);
@@ -1011,7 +877,7 @@ namespace Injector.Services
                     command = "GET_VISUAL_TREE"
                 };
 
-                var commandJson = JsonSerializer.Serialize(command);
+                var commandJson = JsonSerializer.Serialize(command, GetJsonOptions());
                 var messageBytes = Encoding.UTF8.GetBytes(commandJson);
                 await pipeClient.WriteAsync(messageBytes, 0, messageBytes.Length, cts.Token);
                 await pipeClient.FlushAsync(cts.Token);
@@ -1088,7 +954,7 @@ namespace Injector.Services
                 await pipeClient.ConnectAsync(cts.Token);
                 _logger.LogDebug("Connected to pipe successfully");
 
-                var commandJson = JsonSerializer.Serialize(commandData);
+                var commandJson = JsonSerializer.Serialize(commandData, GetJsonOptions());
                 var messageBytes = Encoding.UTF8.GetBytes(commandJson);
                 await pipeClient.WriteAsync(messageBytes, 0, messageBytes.Length, cts.Token);
                 await pipeClient.FlushAsync(cts.Token);
@@ -1131,352 +997,6 @@ namespace Injector.Services
             catch
             {
                 return false;
-            }
-        }
-
-        public async Task<ButtonClickResult> FindInjectAndClickButtonAsync(string processIdentifier, string buttonText, bool isProcessId = false)
-        {
-            _logger.LogInformation($"Starting consolidated find-inject-click for '{processIdentifier}', button text: '{buttonText}', isProcessId: {isProcessId}");
-
-            try
-            {
-                if (string.IsNullOrWhiteSpace(processIdentifier))
-                {
-                    return new ButtonClickResult
-                    {
-                        Success = false,
-                        ProcessId = 0,
-                        ButtonText = buttonText,
-                        Error = "Process identifier cannot be empty",
-                        Message = "Invalid input: process identifier is required"
-                    };
-                }
-
-                if (string.IsNullOrWhiteSpace(buttonText))
-                {
-                    return new ButtonClickResult
-                    {
-                        Success = false,
-                        ProcessId = 0,
-                        ButtonText = buttonText ?? "",
-                        Error = "Button text cannot be empty",
-                        Message = "Invalid input: button text is required"
-                    };
-                }
-
-                WpfProcessInfo? processInfo = null;
-                int targetProcessId = 0;
-
-                // Step 1: Find the process
-                if (isProcessId)
-                {
-                    // Process identifier is a PID
-                    if (int.TryParse(processIdentifier, out targetProcessId))
-                    {
-                        _logger.LogInformation($"Looking up process by PID: {targetProcessId}");
-                        processInfo = await _processService.GetProcessInfoAsync(targetProcessId);
-                        if (processInfo == null)
-                        {
-                            return new ButtonClickResult
-                            {
-                                Success = false,
-                                ProcessId = targetProcessId,
-                                ButtonText = buttonText,
-                                Error = $"Process with ID {targetProcessId} not found or not accessible",
-                                Message = "Process not found"
-                            };
-                        }
-                    }
-                    else
-                    {
-                        return new ButtonClickResult
-                        {
-                            Success = false,
-                            ProcessId = 0,
-                            ButtonText = buttonText,
-                            Error = $"Invalid process ID format: '{processIdentifier}'",
-                            Message = "Process ID must be a valid integer"
-                        };
-                    }
-                }
-                else
-                {
-                    // Process identifier is a name/title
-                    _logger.LogInformation($"Looking up process by name: '{processIdentifier}'");
-                    processInfo = await _processService.FindProcessByNameAsync(processIdentifier);
-                    if (processInfo == null)
-                    {
-                        return new ButtonClickResult
-                        {
-                            Success = false,
-                            ProcessId = 0,
-                            ButtonText = buttonText,
-                            Error = $"No WPF process found matching '{processIdentifier}'",
-                            Message = "Process not found by name"
-                        };
-                    }
-                    targetProcessId = processInfo.ProcessId;
-                }
-
-                _logger.LogInformation($"Found target process: {processInfo.ProcessName} (PID: {targetProcessId})");
-
-                if (!processInfo.IsWpfApplication)
-                {
-                    return new ButtonClickResult
-                    {
-                        Success = false,
-                        ProcessId = targetProcessId,
-                        ButtonText = buttonText,
-                        Error = $"Process {targetProcessId} ({processInfo.ProcessName}) is not a WPF application",
-                        Message = "Target process is not WPF"
-                    };
-                }
-
-                // Step 2: Inject WpfInspector if not already done
-                var wasAlreadyInjected = await IsAlreadyInjectedAsync(targetProcessId);
-                if (!wasAlreadyInjected)
-                {
-                    _logger.LogInformation($"WpfInspector not yet injected into process {targetProcessId}, injecting now...");
-                    var injectionResult = await InjectAndPingAsync(targetProcessId);
-                    if (!injectionResult.Success)
-                    {
-                        return new ButtonClickResult
-                        {
-                            Success = false,
-                            ProcessId = targetProcessId,
-                            ButtonText = buttonText,
-                            Error = injectionResult.Error,
-                            Message = "Failed to inject WpfInspector",
-                            WasInjected = false
-                        };
-                    }
-                    _logger.LogInformation($"Successfully injected WpfInspector into process {targetProcessId}");
-                }
-                else
-                {
-                    _logger.LogInformation($"WpfInspector already injected into process {targetProcessId}");
-                }
-
-                // Step 3: Click the button
-                _logger.LogInformation($"Attempting to click button '{buttonText}' in process {targetProcessId}");
-                var clickResult = await ClickButtonAsync(targetProcessId, buttonText);
-                
-                // Add process name to the result for better context
-                clickResult.ProcessName = processInfo.ProcessName;
-                clickResult.WasInjected = !wasAlreadyInjected;
-
-                if (clickResult.Success)
-                {
-                    _logger.LogInformation($"Successfully completed find-inject-click for '{processIdentifier}' -> PID {targetProcessId}");
-                }
-                else
-                {
-                    _logger.LogWarning($"Failed to click button in process {targetProcessId}: {clickResult.Error}");
-                }
-
-                return clickResult;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error during find-inject-click for '{processIdentifier}', button text: '{buttonText}'");
-                
-                return new ButtonClickResult
-                {
-                    Success = false,
-                    ProcessId = 0,
-                    ButtonText = buttonText ?? "",
-                    Error = ex.Message,
-                    Message = "Exception occurred during find-inject-click operation",
-                    WasInjected = false
-                };
-            }
-        }
-
-        public async Task<CommandResult> FindInjectAndRunCommandAsync(string processIdentifier, string elementType, int hashcode, string command, string? parameters = null, bool isProcessId = false)
-        {
-            _logger.LogInformation($"Starting consolidated find-inject-command for '{processIdentifier}', element type: '{elementType}', hashcode: {hashcode}, command: '{command}', isProcessId: {isProcessId}");
-
-            try
-            {
-                if (string.IsNullOrWhiteSpace(processIdentifier))
-                {
-                    return new CommandResult
-                    {
-                        Success = false,
-                        ProcessId = 0,
-                        ElementType = elementType,
-                        Hashcode = hashcode,
-                        Command = command,
-                        Error = "Process identifier cannot be empty",
-                        Message = "Invalid input: process identifier is required"
-                    };
-                }
-
-                if (string.IsNullOrWhiteSpace(elementType))
-                {
-                    return new CommandResult
-                    {
-                        Success = false,
-                        ProcessId = 0,
-                        ElementType = elementType ?? "",
-                        Hashcode = hashcode,
-                        Command = command,
-                        Error = "Element type cannot be empty",
-                        Message = "Invalid input: element type is required"
-                    };
-                }
-
-                if (string.IsNullOrWhiteSpace(command))
-                {
-                    return new CommandResult
-                    {
-                        Success = false,
-                        ProcessId = 0,
-                        ElementType = elementType,
-                        Hashcode = hashcode,
-                        Command = command ?? "",
-                        Error = "Command cannot be empty",
-                        Message = "Invalid input: command is required"
-                    };
-                }
-
-                WpfProcessInfo? processInfo = null;
-                int targetProcessId = 0;
-
-                // Step 1: Find the process
-                if (isProcessId)
-                {
-                    // Process identifier is a PID
-                    if (int.TryParse(processIdentifier, out targetProcessId))
-                    {
-                        _logger.LogInformation($"Looking up process by PID: {targetProcessId}");
-                        processInfo = await _processService.GetProcessInfoAsync(targetProcessId);
-                        if (processInfo == null)
-                        {
-                            return new CommandResult
-                            {
-                                Success = false,
-                                ProcessId = targetProcessId,
-                                ElementType = elementType,
-                                Hashcode = hashcode,
-                                Command = command,
-                                Error = $"Process with ID {targetProcessId} not found or not accessible",
-                                Message = "Process not found"
-                            };
-                        }
-                    }
-                    else
-                    {
-                        return new CommandResult
-                        {
-                            Success = false,
-                            ProcessId = 0,
-                            ElementType = elementType,
-                            Hashcode = hashcode,
-                            Command = command,
-                            Error = $"Invalid process ID format: '{processIdentifier}'",
-                            Message = "Process ID must be a valid integer"
-                        };
-                    }
-                }
-                else
-                {
-                    // Process identifier is a name/title
-                    _logger.LogInformation($"Looking up process by name: '{processIdentifier}'");
-                    processInfo = await _processService.FindProcessByNameAsync(processIdentifier);
-                    if (processInfo == null)
-                    {
-                        return new CommandResult
-                        {
-                            Success = false,
-                            ProcessId = 0,
-                            ElementType = elementType,
-                            Hashcode = hashcode,
-                            Command = command,
-                            Error = $"No WPF process found matching '{processIdentifier}'",
-                            Message = "Process not found by name"
-                        };
-                    }
-                    targetProcessId = processInfo.ProcessId;
-                }
-
-                _logger.LogInformation($"Found target process: {processInfo.ProcessName} (PID: {targetProcessId})");
-
-                if (!processInfo.IsWpfApplication)
-                {
-                    return new CommandResult
-                    {
-                        Success = false,
-                        ProcessId = targetProcessId,
-                        ElementType = elementType,
-                        Hashcode = hashcode,
-                        Command = command,
-                        Error = $"Process {targetProcessId} ({processInfo.ProcessName}) is not a WPF application",
-                        Message = "Target process is not WPF"
-                    };
-                }
-
-                // Step 2: Inject WpfInspector if not already done
-                var wasAlreadyInjected = await IsAlreadyInjectedAsync(targetProcessId);
-                if (!wasAlreadyInjected)
-                {
-                    _logger.LogInformation($"WpfInspector not yet injected into process {targetProcessId}, injecting now...");
-                    var injectionResult = await InjectAndPingAsync(targetProcessId);
-                    if (!injectionResult.Success)
-                    {
-                        return new CommandResult
-                        {
-                            Success = false,
-                            ProcessId = targetProcessId,
-                            ElementType = elementType,
-                            Hashcode = hashcode,
-                            Command = command,
-                            Error = injectionResult.Error,
-                            Message = "Failed to inject WpfInspector",
-                            WasInjected = false
-                        };
-                    }
-                    _logger.LogInformation($"Successfully injected WpfInspector into process {targetProcessId}");
-                }
-                else
-                {
-                    _logger.LogInformation($"WpfInspector already injected into process {targetProcessId}");
-                }
-
-                // Step 3: Execute the command
-                _logger.LogInformation($"Attempting to execute command '{command}' on {elementType} with hashcode {hashcode} in process {targetProcessId}");
-                var commandResult = await RunCommandAsync(targetProcessId, elementType, hashcode, command, parameters);
-                
-                // Add process name to the result for better context
-                commandResult.ProcessName = processInfo.ProcessName;
-                commandResult.WasInjected = !wasAlreadyInjected;
-
-                if (commandResult.Success)
-                {
-                    _logger.LogInformation($"Successfully completed find-inject-command for '{processIdentifier}' -> PID {targetProcessId}");
-                }
-                else
-                {
-                    _logger.LogWarning($"Failed to execute command in process {targetProcessId}: {commandResult.Error}");
-                }
-
-                return commandResult;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error during find-inject-command for '{processIdentifier}', element type: '{elementType}', command: '{command}'");
-                
-                return new CommandResult
-                {
-                    Success = false,
-                    ProcessId = 0,
-                    ElementType = elementType ?? "",
-                    Hashcode = hashcode,
-                    Command = command ?? "",
-                    Error = ex.Message,
-                    Message = "Exception occurred during find-inject-command operation",
-                    WasInjected = false
-                };
             }
         }
     }

@@ -1,7 +1,7 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace Injector.Models
+namespace SnoopWpfMcpServer.Models
 {
     public class WpfProcessInfo
     {

@@ -1,14 +1,14 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Injector.Services;
-using Injector.Plugins;
+using SnoopWpfMcpServer.Services;
 
-namespace Injector
+namespace SnoopWpfMcpServer
 {
     public class Program
     {
@@ -16,26 +16,25 @@ namespace Injector
         {
             try
             {
-                Console.WriteLine("WpfInspector MCP Server");
+                Console.WriteLine("WpfInspector MCP HTTP Server");
                 Console.WriteLine("Initializing...");
 
-                // Wait for debugger if requested
-                if (Environment.GetEnvironmentVariable("WAIT_FOR_DEBUGGER") == "true")
-                {
-                    Console.WriteLine("Waiting for debugger to attach...");
-                    Console.WriteLine($"Process ID: {Environment.ProcessId}");
-                    while (!System.Diagnostics.Debugger.IsAttached)
-                    {
-                        await Task.Delay(100);
-                    }
-                    Console.WriteLine("Debugger attached!");
-                }
+                // Check if stdio mode is requested
+                bool useStdio = Environment.GetEnvironmentVariable("MCP_TRANSPORT") == "stdio" ||
+                               Array.Exists(args, arg => arg.Equals("--stdio", StringComparison.OrdinalIgnoreCase));
 
-                // Build the host
-                var host = CreateHostBuilder(args).Build();
-                
-                // Run the host
-                await host.RunAsync();
+                if (useStdio)
+                {
+                    Console.WriteLine("Starting in stdio mode...");
+                    var stdioHost = CreateStdioHostBuilder(args).Build();
+                    await stdioHost.RunAsync();
+                }
+                else
+                {
+                    Console.WriteLine("Starting HTTP server...");
+                    var httpHost = CreateHttpHostBuilder(args).Build();
+                    await httpHost.RunAsync();
+                }
                 
                 return 0;
             }
@@ -47,7 +46,21 @@ namespace Injector
             }
         }
 
-        private static IHostBuilder CreateHostBuilder(string[] args) =>
+        private static IHostBuilder CreateHttpHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                    webBuilder.UseUrls("http://localhost:8080", "https://localhost:8443");
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                    logging.SetMinimumLevel(LogLevel.Information);
+                });
+
+        private static IHostBuilder CreateStdioHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(logging =>
                 {

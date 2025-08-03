@@ -1,155 +1,178 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 
 namespace SnoopWpfMcpServer.Services
 {
-    public class McpServer : BackgroundService
+    [ApiController]
+    [Route("mcp")]
+    public class HttpMcpController : ControllerBase
     {
-        private readonly ILogger<McpServer> _logger;
+        private readonly ILogger<HttpMcpController> _logger;
         private readonly Kernel _kernel;
         private readonly WpfInspectorPlugin _plugin;
 
-        public McpServer(
-            ILogger<McpServer> logger,
+        public HttpMcpController(
+            ILogger<HttpMcpController> logger,
             Kernel kernel,
             WpfInspectorPlugin plugin)
         {
             _logger = logger;
             _kernel = kernel;
             _plugin = plugin;
-        }
 
-        private static JsonSerializerOptions GetJsonOptions()
-        {
-            return new JsonSerializerOptions
+            // Add the plugin to the kernel if not already added
+            if (_kernel.Plugins.All(p => p.Name != "WpfInspector"))
             {
-                WriteIndented = false,
-                NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
-            };
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            _logger.LogInformation("WPF Inspector MCP Server starting...");
-            
-            // Add the plugin to the kernel
-            _kernel.Plugins.AddFromObject(_plugin, "WpfInspector");
-            
-            _logger.LogInformation("Available functions:");
-            foreach (var function in _kernel.Plugins.GetFunctionsMetadata())
-            {
-                _logger.LogInformation($"  - {function.Name}: {function.Description}");
-            }
-
-            _logger.LogInformation("MCP Server ready. Listening for JSON-RPC requests on stdin/stdout...");
-
-            try
-            {
-                await ProcessMcpRequestsAsync(stoppingToken);
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogInformation("MCP Server stopping...");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error in MCP Server");
+                _kernel.Plugins.AddFromObject(_plugin, "WpfInspector");
             }
         }
 
-        private async Task ProcessMcpRequestsAsync(CancellationToken cancellationToken)
-        {
-            using var stdin = Console.OpenStandardInput();
-            using var stdout = Console.OpenStandardOutput();
-            using var reader = new StreamReader(stdin);
-            using var writer = new StreamWriter(stdout) { AutoFlush = true };
-
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    var line = await reader.ReadLineAsync();
-                    if (line == null)
-                    {
-                        // EOF reached
-                        break;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(line))
-                        continue;
-
-                    _logger.LogDebug($"Received request: {line}");
-
-                    var response = await ProcessJsonRpcRequestAsync(line);
-                    if (response != null)
-                    {
-                        var responseJson = JsonSerializer.Serialize(response, GetJsonOptions());
-                        _logger.LogDebug($"Sending response: {responseJson}");
-                        await writer.WriteLineAsync(responseJson);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error processing MCP request");
-                    
-                    // Send error response
-                    var errorResponse = new
-                    {
-                        jsonrpc = "2.0",
-                        error = new
-                        {
-                            code = -32603,
-                            message = "Internal error",
-                            data = ex.Message
-                        },
-                        id = (object?)null
-                    };
-                    
-                    var errorJson = JsonSerializer.Serialize(errorResponse, GetJsonOptions());
-                    await writer.WriteLineAsync(errorJson);
-                }
-            }
-        }
-
-        private async Task<object?> ProcessJsonRpcRequestAsync(string requestJson)
+        [HttpPost("rpc")]
+        public async Task<IActionResult> HandleJsonRpcRequest([FromBody] JsonElement request)
         {
             try
             {
-                var request = JsonSerializer.Deserialize<JsonNode>(requestJson);
-                if (request == null)
-                    return CreateErrorResponse(null, -32700, "Parse error");
+                _logger.LogDebug($"Received JSON-RPC request: {request}");
 
-                var id = request["id"];
-                var method = request["method"]?.ToString();
-                var paramsNode = request["params"];
+                var requestNode = JsonNode.Parse(request.GetRawText());
+                if (requestNode == null)
+                    return Ok(CreateErrorResponse(null, -32700, "Parse error"));
+
+                var id = requestNode["id"];
+                var method = requestNode["method"]?.ToString();
+                var paramsNode = requestNode["params"];
 
                 if (string.IsNullOrEmpty(method))
-                    return CreateErrorResponse(id, -32600, "Invalid Request");
+                    return Ok(CreateErrorResponse(id, -32600, "Invalid Request"));
 
                 _logger.LogInformation($"Processing method: {method}");
 
-                return method switch
+                var response = method switch
                 {
                     "initialize" => await HandleInitializeAsync(id, paramsNode),
                     "tools/list" => await HandleToolsListAsync(id),
                     "tools/call" => await HandleToolsCallAsync(id, paramsNode),
                     _ => CreateErrorResponse(id, -32601, "Method not found")
                 };
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing JSON-RPC request");
-                return CreateErrorResponse(null, -32603, "Internal error", ex.Message);
+                return Ok(CreateErrorResponse(null, -32603, "Internal error", ex.Message));
             }
+        }
+
+        [HttpGet("initialize")]
+        public IActionResult Initialize()
+        {
+            _logger.LogInformation("Handling HTTP GET initialize request");
+            
+            return Ok(new
+            {
+                protocolVersion = "2024-11-05",
+                capabilities = new
+                {
+                    tools = new { }
+                },
+                serverInfo = new
+                {
+                    name = "WpfInspector MCP Server",
+                    version = "1.0.0",
+                    transport = "http"
+                }
+            });
+        }
+
+        [HttpGet("tools")]
+        public IActionResult ListTools()
+        {
+            _logger.LogInformation("Handling HTTP GET tools request");
+            
+            var functions = _kernel.Plugins.GetFunctionsMetadata();
+            var tools = functions.Select(f => new
+            {
+                name = f.Name,
+                description = f.Description,
+                inputSchema = new
+                {
+                    type = "object",
+                    properties = f.Parameters.ToDictionary(
+                        p => p.Name,
+                        p => new
+                        {
+                            type = GetJsonSchemaType(p.ParameterType ?? typeof(string)),
+                            description = p.Description
+                        }),
+                    required = f.Parameters
+                        .Where(p => p.IsRequired)
+                        .Select(p => p.Name)
+                        .ToArray()
+                }
+            }).ToArray();
+
+            return Ok(new { tools = tools });
+        }
+
+        [HttpPost("tools/{toolName}")]
+        public async Task<IActionResult> CallTool(string toolName, [FromBody] JsonElement arguments)
+        {
+            try
+            {
+                _logger.LogInformation($"Calling tool: {toolName}");
+
+                var function = _kernel.Plugins.GetFunction("WpfInspector", toolName);
+                if (function == null)
+                    return NotFound(new { error = $"Tool '{toolName}' not found" });
+
+                var kernelArguments = new KernelArguments();
+                
+                if (arguments.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var property in arguments.EnumerateObject())
+                    {
+                        kernelArguments[property.Name] = property.Value.ToString();
+                    }
+                }
+
+                var result = await _kernel.InvokeAsync(function, kernelArguments);
+                var resultValue = result.ToString();
+
+                return Ok(new
+                {
+                    success = true,
+                    result = resultValue,
+                    toolName = toolName
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error calling tool {toolName}");
+                return StatusCode(500, new 
+                { 
+                    success = false,
+                    error = ex.Message,
+                    toolName = toolName
+                });
+            }
+        }
+
+        [HttpGet("health")]
+        public IActionResult Health()
+        {
+            return Ok(new 
+            { 
+                status = "healthy",
+                timestamp = DateTime.UtcNow,
+                availableTools = _kernel.Plugins.GetFunctionsMetadata().Count()
+            });
         }
 
         private async Task<object> HandleInitializeAsync(JsonNode? id, JsonNode? paramsNode)
@@ -169,7 +192,8 @@ namespace SnoopWpfMcpServer.Services
                     serverInfo = new
                     {
                         name = "WpfInspector MCP Server",
-                        version = "1.0.0"
+                        version = "1.0.0",
+                        transport = "http"
                     }
                 },
                 id = id
@@ -238,7 +262,9 @@ namespace SnoopWpfMcpServer.Services
                 {
                     foreach (var arg in arguments)
                     {
-                        kernelArguments[arg.Key] = arg.Value?.ToString();
+                        // Map legacy parameter names for backward compatibility
+                        var parameterName = arg.Key;
+                        kernelArguments[parameterName] = arg.Value?.ToString();
                     }
                 }
 

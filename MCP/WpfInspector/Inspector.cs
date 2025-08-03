@@ -6,11 +6,11 @@ using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -22,6 +22,15 @@ namespace WpfInspector
         private static NamedPipeServerStream? _pipeServer;
         private static CancellationTokenSource? _cancellationTokenSource;
         private static Task? _serverTask;
+
+        private static JsonSerializerOptions GetJsonOptions()
+        {
+            return new JsonSerializerOptions 
+            { 
+                WriteIndented = false,
+                NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
+            };
+        }
 
         /// <summary>
         /// Entry point called by the injector - this method will be called in the target process
@@ -162,7 +171,7 @@ namespace WpfInspector
                     // Try fallback to 'command' for backward compatibility
                     if (!root.TryGetProperty("command", out commandTypeElement))
                     {
-                        return JsonSerializer.Serialize(new { success = false, error = "Missing 'commandType' or 'command' property" });
+                        return JsonSerializer.Serialize(new { success = false, error = "Missing 'commandType' or 'command' property" }, GetJsonOptions());
                     }
                 }
                 
@@ -170,103 +179,63 @@ namespace WpfInspector
                 
                 switch (command?.ToUpperInvariant())
                 {
-                    case "RUN_COMMAND":
-                        return ProcessRunCommand(root);
+                    case "INVOKE_AUTOMATION_PEER":
+                        return ProcessAutomationPeerCommand(root);
                     
                     case "TAKE_SCREENSHOT":
                         return ProcessTakeScreenshotCommand(root);
                     
                     case "GET_VISUAL_TREE":
-                        return ProcessGetVisualTreeCommand(root);
+                        return ProcessGetVisualTreeCommand();
+                    
+                    case "GET_ELEMENT_BY_HASHCODE":
+                        return ProcessGetElementByHashcodeCommand(root);
                     
                     default:
-                        return JsonSerializer.Serialize(new { success = false, error = $"Unknown command: {command}" });
+                        return JsonSerializer.Serialize(new { success = false, error = $"Unknown command: {command}" }, GetJsonOptions());
                 }
             }
             catch (Exception ex)
             {
-                return JsonSerializer.Serialize(new { success = false, error = $"Error processing JSON command: {ex.Message}" });
+                return JsonSerializer.Serialize(new { success = false, error = $"Error processing JSON command: {ex.Message}" }, GetJsonOptions());
             }
         }
 
-        private static string ProcessRunCommand(JsonElement commandElement)
+        private static string ProcessAutomationPeerCommand(JsonElement commandElement)
         {
             try
             {
                 if (!commandElement.TryGetProperty("type", out var typeElement))
                 {
-                    return JsonSerializer.Serialize(new { success = false, error = "Missing 'type' parameter" });
+                    return JsonSerializer.Serialize(new { success = false, error = "Missing 'type' parameter" }, GetJsonOptions());
                 }
                 
                 if (!commandElement.TryGetProperty("hashcode", out var hashcodeElement))
                 {
-                    return JsonSerializer.Serialize(new { success = false, error = "Missing 'hashcode' parameter" });
+                    return JsonSerializer.Serialize(new { success = false, error = "Missing 'hashcode' parameter" }, GetJsonOptions());
                 }
                 
-                if (!commandElement.TryGetProperty("command", out var commandTypeElement))
-                {
-                    return JsonSerializer.Serialize(new { success = false, error = "Missing 'command' parameter" });
-                }
-
                 var typeName = typeElement.GetString();
                 var hashcode = hashcodeElement.GetInt32();
-                var commandType = commandTypeElement.GetString();
 
                 if (string.IsNullOrWhiteSpace(typeName))
                 {
-                    return JsonSerializer.Serialize(new { success = false, error = "type cannot be empty" });
-                }
-                
-                if (string.IsNullOrWhiteSpace(commandType))
-                {
-                    return JsonSerializer.Serialize(new { success = false, error = "command cannot be empty" });
+                    return JsonSerializer.Serialize(new { success = false, error = "type cannot be empty" }, GetJsonOptions());
                 }
 
-                LogMessage($"Attempting to run command '{commandType}' on {typeName} with hashcode: {hashcode}");
+                LogMessage($"Attempting to execute automation peer action on {typeName} with hashcode: {hashcode}");
 
                 // Perform the command on the UI thread
                 var result = Application.Current?.Dispatcher.Invoke<object>(() =>
                 {
                     try
                     {
-                        // Get the main window
-                        var mainWindow = Application.Current.MainWindow;
-                        if (mainWindow == null)
-                        {
-                            return new { success = false, error = "No main window found" };
-                        }
-
-                        LogMessage($"Searching for {typeName} with hashcode {hashcode} in window: {mainWindow.Title}");
-
-                        // Find object by type and hashcode - search main window first
-                        var targetObject = FindObjectByTypeAndHashCode(mainWindow, typeName, hashcode);
                         
-                        // If not found in main window, search all other application windows
-                        if (targetObject == null)
-                        {
-                            LogMessage($"Not found in main window, searching {Application.Current.Windows.Count - 1} other windows...");
-                            foreach (Window window in Application.Current.Windows)
-                            {
-                                if (window != mainWindow)
-                                {
-                                    LogMessage($"Searching in window: {window.Title}");
-                                    targetObject = FindObjectByTypeAndHashCode(window, typeName, hashcode);
-                                    if (targetObject != null)
-                                    {
-                                        LogMessage($"Found {typeName} with hashcode {hashcode} in window: {window.Title}");
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            LogMessage($"Found {typeName} with hashcode {hashcode} in main window");
-                        }
+                        var targetObject = FindObjectByTypeAndHashCode(typeName, hashcode);
                         
                         if (targetObject == null)
                         {
-                            LogMessage($"Object not found after searching all windows. Type: {typeName}, HashCode: {hashcode}");
+                            LogMessage($"Object not found Type: {typeName}, HashCode: {hashcode}");
                             return new { 
                                 success = false, 
                                 error = $"{typeName} with hashcode {hashcode} not found in any window" 
@@ -275,8 +244,8 @@ namespace WpfInspector
 
                         LogMessage($"Found object: {targetObject.GetType().Name} with hashcode {targetObject.GetHashCode()}");
 
-                        // Execute the command based on type
-                        var commandResult = ExecuteCommandOnObject(targetObject, commandType, commandElement);
+                        // Execute the automation peer command
+                        var commandResult = ExecuteAutomationPeerCommandOnObject(targetObject, commandElement);
                         
                         return commandResult;
                     }
@@ -287,12 +256,12 @@ namespace WpfInspector
                     }
                 });
 
-                return JsonSerializer.Serialize(result);
+                return JsonSerializer.Serialize(result, GetJsonOptions());
             }
             catch (Exception ex)
             {
                 LogMessage($"Error in ProcessRunCommand: {ex.Message}");
-                return JsonSerializer.Serialize(new { success = false, error = $"Error processing run command: {ex.Message}" });
+                return JsonSerializer.Serialize(new { success = false, error = $"Error processing run command: {ex.Message}" }, GetJsonOptions());
             }
         }
 
@@ -354,607 +323,52 @@ namespace WpfInspector
                     }
                 });
 
-                return JsonSerializer.Serialize(result);
+                return JsonSerializer.Serialize(result, GetJsonOptions());
             }
             catch (Exception ex)
             {
                 LogMessage($"Error in ProcessTakeScreenshotCommand: {ex.Message}");
-                return JsonSerializer.Serialize(new { success = false, error = $"Error processing take screenshot command: {ex.Message}" });
+                return JsonSerializer.Serialize(new { success = false, error = $"Error processing take screenshot command: {ex.Message}" }, GetJsonOptions());
             }
         }
-
-        private static Button? FindButtonByText(DependencyObject parent, string buttonText)
+        private static object? FindObjectByTypeAndHashCode(string typeName, int hashcode)
         {
             try
             {
-                if (parent == null) return null;
-
-                var allButtons = new List<Button>();
-                CollectAllButtons(parent, allButtons);
-
-                if (!allButtons.Any()) return null;
-
-                // First pass: Try exact match (case-insensitive)
-                foreach (var button in allButtons)
-                {
-                    var content = button.Content?.ToString();
-                    if (string.Equals(content, buttonText, StringComparison.OrdinalIgnoreCase))
+                return GetAllWpfControls()
+                    .SelectMany(GetChildrenRecursive)
+                    .Where(element =>
                     {
-                        LogMessage($"Found exact match for '{buttonText}': '{content}'");
-                        return button;
-                    }
-                }
-
-                // Second pass: Try fuzzy matching if no exact match found
-                LogMessage($"No exact match found for '{buttonText}', trying fuzzy matching...");
-                
-                var bestMatch = FindBestFuzzyMatch(allButtons, buttonText);
-                if (bestMatch != null)
-                {
-                    var content = bestMatch.Content?.ToString();
-                    LogMessage($"Found fuzzy match for '{buttonText}': '{content}'");
-                    return bestMatch;
-                }
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                LogMessage($"Error in FindButtonByText: {ex.Message}");
-                return null;
-            }
-        }
-
-        private static void CollectAllButtons(DependencyObject parent, List<Button> buttons)
-        {
-            if (parent == null) return;
-
-            try
-            {
-                // Check if this element is a button
-                if (parent is Button button)
-                {
-                    buttons.Add(button);
-                }
-
-                // Search children recursively
-                int childCount = VisualTreeHelper.GetChildrenCount(parent);
-                for (int i = 0; i < childCount; i++)
-                {
-                    var child = VisualTreeHelper.GetChild(parent, i);
-                    CollectAllButtons(child, buttons);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage($"Error in CollectAllButtons: {ex.Message}");
-            }
-        }
-
-        private static Button? FindBestFuzzyMatch(List<Button> buttons, string targetText)
-        {
-            if (!buttons.Any() || string.IsNullOrWhiteSpace(targetText))
-                return null;
-
-            Button? bestMatch = null;
-            double bestScore = 0.0;
-            const double minimumScore = 0.6; // Require at least 60% similarity
-
-            foreach (var button in buttons)
-            {
-                var content = button.Content?.ToString();
-                if (string.IsNullOrWhiteSpace(content))
-                    continue;
-
-                var score = CalculateSimilarity(targetText, content);
-                
-                LogMessage($"Comparing '{targetText}' with '{content}': similarity = {score:F2}");
-                
-                if (score > bestScore && score >= minimumScore)
-                {
-                    bestScore = score;
-                    bestMatch = button;
-                }
-            }
-
-            if (bestMatch != null)
-            {
-                LogMessage($"Best fuzzy match: '{bestMatch.Content}' with score {bestScore:F2}");
-            }
-            else
-            {
-                LogMessage($"No fuzzy match found above threshold {minimumScore}");
-            }
-
-            return bestMatch;
-        }
-
-        private static double CalculateSimilarity(string text1, string text2)
-        {
-            if (string.IsNullOrWhiteSpace(text1) || string.IsNullOrWhiteSpace(text2))
-                return 0.0;
-
-            // Normalize texts for comparison
-            var normalizedText1 = NormalizeText(text1);
-            var normalizedText2 = NormalizeText(text2);
-
-            // Check if one contains the other (high score for partial matches)
-            if (normalizedText1.Contains(normalizedText2) || normalizedText2.Contains(normalizedText1))
-            {
-                var shorterLength = Math.Min(normalizedText1.Length, normalizedText2.Length);
-                var longerLength = Math.Max(normalizedText1.Length, normalizedText2.Length);
-                return (double)shorterLength / longerLength * 0.9; // Slightly penalize partial matches
-            }
-
-            // Use Levenshtein distance for similarity calculation
-            var distance = CalculateLevenshteinDistance(normalizedText1, normalizedText2);
-            var maxLength = Math.Max(normalizedText1.Length, normalizedText2.Length);
-            
-            if (maxLength == 0) return 1.0;
-            
-            return 1.0 - (double)distance / maxLength;
-        }
-
-        private static string NormalizeText(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-                return string.Empty;
-
-            // Remove common prefixes/suffixes and normalize
-            var normalized = text.Trim()
-                                .Replace("+", "")
-                                .Replace("&", "")
-                                .Replace("_", " ")
-                                .Replace("-", " ")
-                                .ToLowerInvariant();
-
-            // Remove extra whitespace
-            while (normalized.Contains("  "))
-            {
-                normalized = normalized.Replace("  ", " ");
-            }
-
-            return normalized.Trim();
-        }
-
-        private static int CalculateLevenshteinDistance(string s1, string s2)
-        {
-            if (string.IsNullOrEmpty(s1)) return s2?.Length ?? 0;
-            if (string.IsNullOrEmpty(s2)) return s1.Length;
-
-            var matrix = new int[s1.Length + 1, s2.Length + 1];
-
-            for (int i = 0; i <= s1.Length; i++)
-                matrix[i, 0] = i;
-
-            for (int j = 0; j <= s2.Length; j++)
-                matrix[0, j] = j;
-
-            for (int i = 1; i <= s1.Length; i++)
-            {
-                for (int j = 1; j <= s2.Length; j++)
-                {
-                    int cost = s1[i - 1] == s2[j - 1] ? 0 : 1;
-                    matrix[i, j] = Math.Min(
-                        Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
-                        matrix[i - 1, j - 1] + cost);
-                }
-            }
-
-            return matrix[s1.Length, s2.Length];
-        }
-
-        private static object? FindObjectByTypeAndHashCode(DependencyObject parent, string typeName, int hashcode)
-        {
-            if (parent == null) return null;
-
-            try
-            {
-                // Check if this element matches the type and hashcode
-                var elementType = parent.GetType();
-                var elementTypeName = elementType.FullName ?? elementType.Name;
-                var elementHashCode = parent.GetHashCode();
-                
-                // Log every DataGridRow we encounter for debugging
-                if (elementTypeName.Contains("DataGridRow"))
-                {
-                    LogMessage($"Found DataGridRow: Type={elementTypeName}, HashCode={elementHashCode}, Target={typeName}:{hashcode}");
-                }
-                
-                if (elementHashCode == hashcode && elementTypeName.Equals(typeName, StringComparison.OrdinalIgnoreCase))
-                {
-                    LogMessage($"MATCH FOUND: {typeName} with hashcode {hashcode}");
-                    return parent;
-                }
-
-                // Search visual tree children recursively
-                int childCount = VisualTreeHelper.GetChildrenCount(parent);
-                for (int i = 0; i < childCount; i++)
-                {
-                    var child = VisualTreeHelper.GetChild(parent, i);
-                    var found = FindObjectByTypeAndHashCode(child, typeName, hashcode);
-                    if (found != null)
-                    {
-                        return found;
-                    }
-                }
-
-                // Additional search for elements not in visual tree
-                var logicalFound = FindInLogicalElements(parent, typeName, hashcode);
-                if (logicalFound != null)
-                {
-                    return logicalFound;
-                }
+                        var type = element.GetType();
+                        var elementTypeName = type.FullName ?? type.Name;
+                        var elementHashCode = element.GetHashCode();
+                        
+                        return elementHashCode == hashcode && elementTypeName.Equals(typeName, StringComparison.OrdinalIgnoreCase);
+                    })
+                    .FirstOrDefault();
             }
             catch (Exception ex)
             {
                 LogMessage($"Error in FindObjectByTypeAndHashCode: {ex.Message}");
+                return null;
             }
-
-            return null;
         }
 
-        private static object? FindInLogicalElements(DependencyObject element, string typeName, int hashcode)
+
+        private static object ExecuteAutomationPeerCommandOnObject(object targetObject, JsonElement commandData)
         {
             try
             {
-                // Search ContextMenu items for FrameworkElement types
-                if (element is FrameworkElement frameworkElement && frameworkElement.ContextMenu != null)
-                {
-                    var contextMenu = frameworkElement.ContextMenu;
-                    
-                    // Check the ContextMenu itself
-                    if (contextMenu.GetHashCode() == hashcode && 
-                        contextMenu.GetType().FullName?.Equals(typeName, StringComparison.OrdinalIgnoreCase) == true)
-                    {
-                        return contextMenu;
-                    }
-                    
-                    // Search ContextMenu items
-                    var found = FindInMenuItems(contextMenu.Items, typeName, hashcode);
-                    if (found != null)
-                    {
-                        return found;
-                    }
-                }
-
-                // Search MenuItem subitems
-                if (element is MenuItem menuItem && menuItem.Items.Count > 0)
-                {
-                    var found = FindInMenuItems(menuItem.Items, typeName, hashcode);
-                    if (found != null)
-                    {
-                        return found;
-                    }
-                }
-
-                // Search logical children that might not be in visual tree
-                foreach (object logicalChild in LogicalTreeHelper.GetChildren(element))
-                {
-                    if (logicalChild is DependencyObject depObj)
-                    {
-                        // Check if this logical child matches
-                        if (depObj.GetHashCode() == hashcode && 
-                            depObj.GetType().FullName?.Equals(typeName, StringComparison.OrdinalIgnoreCase) == true)
-                        {
-                            return depObj;
-                        }
-                        
-                        // Recursively search logical children
-                        var found = FindInLogicalElements(depObj, typeName, hashcode);
-                        if (found != null)
-                        {
-                            return found;
-                        }
-                    }
-                }
+                return AutomationPeerHandler.ExecuteInvokeAutomationPeerCommand(targetObject, commandData);
             }
             catch (Exception ex)
             {
-                LogMessage($"Error in FindInLogicalElements: {ex.Message}");
-            }
-
-            return null;
-        }
-
-        private static object? FindInMenuItems(ItemCollection items, string typeName, int hashcode)
-        {
-            try
-            {
-                foreach (var item in items)
-                {
-                    if (item is DependencyObject depObj)
-                    {
-                        // Check if this item matches
-                        if (depObj.GetHashCode() == hashcode && 
-                            depObj.GetType().FullName?.Equals(typeName, StringComparison.OrdinalIgnoreCase) == true)
-                        {
-                            return depObj;
-                        }
-                        
-                        // If it's a MenuItem, search its subitems recursively
-                        if (item is MenuItem menuItem && menuItem.Items.Count > 0)
-                        {
-                            var found = FindInMenuItems(menuItem.Items, typeName, hashcode);
-                            if (found != null)
-                            {
-                                return found;
-                            }
-                        }
-                        
-                        // Also search logical children of this menu item
-                        var logicalFound = FindInLogicalElements(depObj, typeName, hashcode);
-                        if (logicalFound != null)
-                        {
-                            return logicalFound;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage($"Error in FindInMenuItems: {ex.Message}");
-            }
-
-            return null;
-        }
-
-        private static object ExecuteCommandOnObject(object targetObject, string commandType, JsonElement commandData)
-        {
-            try
-            {
-                switch (commandType.ToUpperInvariant())
-                {
-                    case "CLICK":
-                        return ExecuteClickCommand(targetObject);
-                    
-                    case "SET_TEXT":
-                        return ExecuteSetTextCommand(targetObject, commandData);
-                    
-                    case "GET_PROPERTY":
-                        return ExecuteGetPropertyCommand(targetObject, commandData);
-                    
-                    case "SET_PROPERTY":
-                        return ExecuteSetPropertyCommand(targetObject, commandData);
-                    
-                    case "INVOKE_METHOD":
-                        return ExecuteInvokeMethodCommand(targetObject, commandData);
-                    
-                    default:
-                        return new { 
-                            success = false, 
-                            error = $"Unknown command type: {commandType}. Supported: CLICK, SET_TEXT, GET_PROPERTY, SET_PROPERTY, INVOKE_METHOD" 
-                        };
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage($"Error executing command {commandType}: {ex.Message}");
-                return new { success = false, error = $"Error executing command: {ex.Message}" };
+                LogMessage($"Error executing automation peer command: {ex.Message}");
+                return new { success = false, error = $"Error executing automation peer command: {ex.Message}" };
             }
         }
 
-        private static object ExecuteClickCommand(object targetObject)
-        {
-            try
-            {
-                switch (targetObject)
-                {
-                    case Button button:
-                        if (!button.IsEnabled)
-                            return new { success = false, error = "Button is disabled" };
-                        if (!button.IsVisible)
-                            return new { success = false, error = "Button is not visible" };
 
-                        if (button.Command != null && button.Command.CanExecute(button.CommandParameter))
-                        {
-                            button.Command.Execute(button.CommandParameter);
-                        }
-                        else
-                        {
-                            button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        }
-                        return new { success = true, message = "Button clicked successfully" };
-
-                    case System.Windows.Controls.Primitives.ButtonBase buttonBase:
-                        if (!buttonBase.IsEnabled)
-                            return new { success = false, error = "Button is disabled" };
-                        if (!buttonBase.IsVisible)
-                            return new { success = false, error = "Button is not visible" };
-
-                        if (buttonBase.Command != null && buttonBase.Command.CanExecute(buttonBase.CommandParameter))
-                        {
-                            buttonBase.Command.Execute(buttonBase.CommandParameter);
-                        }
-                        else
-                        {
-                            buttonBase.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-                        }
-                        return new { success = true, message = "Button clicked successfully" };
-
-                    default:
-                        return new { success = false, error = $"CLICK command not supported for type {targetObject.GetType().Name}" };
-                }
-            }
-            catch (Exception ex)
-            {
-                return new { success = false, error = $"Error clicking object: {ex.Message}" };
-            }
-        }
-
-        private static object ExecuteSetTextCommand(object targetObject, JsonElement commandData)
-        {
-            try
-            {
-                if (!commandData.TryGetProperty("text", out var textElement))
-                {
-                    return new { success = false, error = "Missing 'text' parameter for SET_TEXT command" };
-                }
-
-                var text = textElement.GetString() ?? "";
-
-                switch (targetObject)
-                {
-                    case TextBox textBox:
-                        textBox.Text = text;
-                        return new { success = true, message = "Text set successfully" };
-
-                    case System.Windows.Controls.Primitives.TextBoxBase textBoxBase:
-                        // Use reflection to set text for other TextBox-derived types
-                        var textProperty = textBoxBase.GetType().GetProperty("Text");
-                        if (textProperty != null && textProperty.CanWrite)
-                        {
-                            textProperty.SetValue(textBoxBase, text);
-                            return new { success = true, message = "Text set successfully" };
-                        }
-                        return new { success = false, error = "Cannot set text on this text control" };
-
-                    default:
-                        return new { success = false, error = $"SET_TEXT command not supported for type {targetObject.GetType().Name}" };
-                }
-            }
-            catch (Exception ex)
-            {
-                return new { success = false, error = $"Error setting text: {ex.Message}" };
-            }
-        }
-
-        private static object ExecuteGetPropertyCommand(object targetObject, JsonElement commandData)
-        {
-            try
-            {
-                if (!commandData.TryGetProperty("property", out var propertyElement))
-                {
-                    return new { success = false, error = "Missing 'property' parameter for GET_PROPERTY command" };
-                }
-
-                var propertyName = propertyElement.GetString();
-                if (string.IsNullOrWhiteSpace(propertyName))
-                {
-                    return new { success = false, error = "Property name cannot be empty" };
-                }
-
-                var property = targetObject.GetType().GetProperty(propertyName);
-                if (property == null)
-                {
-                    return new { success = false, error = $"Property '{propertyName}' not found on type {targetObject.GetType().Name}" };
-                }
-
-                var value = property.GetValue(targetObject);
-                return new { success = true, property = propertyName, value = value?.ToString() ?? "null" };
-            }
-            catch (Exception ex)
-            {
-                return new { success = false, error = $"Error getting property: {ex.Message}" };
-            }
-        }
-
-        private static object ExecuteSetPropertyCommand(object targetObject, JsonElement commandData)
-        {
-            try
-            {
-                if (!commandData.TryGetProperty("property", out var propertyElement))
-                {
-                    return new { success = false, error = "Missing 'property' parameter for SET_PROPERTY command" };
-                }
-
-                if (!commandData.TryGetProperty("value", out var valueElement))
-                {
-                    return new { success = false, error = "Missing 'value' parameter for SET_PROPERTY command" };
-                }
-
-                var propertyName = propertyElement.GetString();
-                if (string.IsNullOrWhiteSpace(propertyName))
-                {
-                    return new { success = false, error = "Property name cannot be empty" };
-                }
-
-                var property = targetObject.GetType().GetProperty(propertyName);
-                if (property == null)
-                {
-                    return new { success = false, error = $"Property '{propertyName}' not found on type {targetObject.GetType().Name}" };
-                }
-
-                if (!property.CanWrite)
-                {
-                    return new { success = false, error = $"Property '{propertyName}' is read-only" };
-                }
-
-                // Convert value to appropriate type
-                object? convertedValue = null;
-                if (valueElement.ValueKind != JsonValueKind.Null)
-                {
-                    var propertyType = property.PropertyType;
-                    if (propertyType == typeof(string))
-                        convertedValue = valueElement.GetString();
-                    else if (propertyType == typeof(bool) || propertyType == typeof(bool?))
-                        convertedValue = valueElement.GetBoolean();
-                    else if (propertyType == typeof(int) || propertyType == typeof(int?))
-                        convertedValue = valueElement.GetInt32();
-                    else if (propertyType == typeof(double) || propertyType == typeof(double?))
-                        convertedValue = valueElement.GetDouble();
-                    else
-                        convertedValue = Convert.ChangeType(valueElement.GetString(), propertyType);
-                }
-
-                property.SetValue(targetObject, convertedValue);
-                return new { success = true, message = $"Property '{propertyName}' set successfully" };
-            }
-            catch (Exception ex)
-            {
-                return new { success = false, error = $"Error setting property: {ex.Message}" };
-            }
-        }
-
-        private static object ExecuteInvokeMethodCommand(object targetObject, JsonElement commandData)
-        {
-            try
-            {
-                if (!commandData.TryGetProperty("method", out var methodElement))
-                {
-                    return new { success = false, error = "Missing 'method' parameter for INVOKE_METHOD command" };
-                }
-
-                var methodName = methodElement.GetString();
-                if (string.IsNullOrWhiteSpace(methodName))
-                {
-                    return new { success = false, error = "Method name cannot be empty" };
-                }
-
-                // Get parameters if provided
-                var parameters = new object[0];
-                if (commandData.TryGetProperty("parameters", out var parametersElement) && 
-                    parametersElement.ValueKind == JsonValueKind.Array)
-                {
-                    var paramList = new List<object>();
-                    foreach (var param in parametersElement.EnumerateArray())
-                    {
-                        if (param.ValueKind == JsonValueKind.String)
-                            paramList.Add(param.GetString() ?? "");
-                        else if (param.ValueKind == JsonValueKind.Number)
-                            paramList.Add(param.GetDouble());
-                        else if (param.ValueKind == JsonValueKind.True || param.ValueKind == JsonValueKind.False)
-                            paramList.Add(param.GetBoolean());
-                        else
-                            paramList.Add(param.GetRawText());
-                    }
-                    parameters = paramList.ToArray();
-                }
-
-                var method = targetObject.GetType().GetMethod(methodName, parameters.Select(p => p.GetType()).ToArray());
-                if (method == null)
-                {
-                    return new { success = false, error = $"Method '{methodName}' not found on type {targetObject.GetType().Name}" };
-                }
-
-                var result = method.Invoke(targetObject, parameters);
-                return new { success = true, method = methodName, result = result?.ToString() ?? "null" };
-            }
-            catch (Exception ex)
-            {
-                return new { success = false, error = $"Error invoking method: {ex.Message}" };
-            }
-        }
 
         private static void LogMessage(string message)
         {
@@ -978,7 +392,138 @@ namespace WpfInspector
             }
         }
 
-        private static string ProcessGetVisualTreeCommand(JsonElement commandElement)
+        private static IEnumerable<DependencyObject> GetAllWpfControls()
+        {
+            var wpfControls = new List<DependencyObject>();
+            
+            try
+            {
+                // Get all WPF application windows first
+                if (Application.Current?.Windows != null)
+                {
+                    foreach (Window window in Application.Current.Windows)
+                    {
+                        if (window != null)
+                        {
+                            wpfControls.Add(window);
+                        }
+                    }
+                }
+
+                // If we found WPF windows, return them and skip WinForms search for performance
+                if (wpfControls.Count > 0)
+                {
+                    LogMessage($"Found {wpfControls.Count} WPF windows, skipping WinForms search");
+                    return wpfControls;
+                }
+
+                // No WPF windows found, search for WPF controls hosted in WinForms
+                LogMessage("No WPF windows found, searching for WPF controls hosted in WinForms");
+                var hostedControls = GetAllWpfControlsHostedInWinforms();
+                wpfControls.AddRange(hostedControls);
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"Error in GetAllWpfControls: {ex.Message}");
+            }
+            
+            return wpfControls;
+        }
+
+        /// <summary>
+        /// Finds WPF controls hosted inside WinForms applications.
+        /// This method covers the most common scenarios but may not catch all edge cases.
+        /// It focuses on ElementHost controls and HwndSource-based hosting.
+        /// </summary>
+        private static IEnumerable<DependencyObject> GetAllWpfControlsHostedInWinforms()
+        {
+            var wpfControls = new List<DependencyObject>();
+            
+            try
+            {
+                var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+                
+                // Approach 1: Use HwndSource to find WPF content in any window handle
+                // This covers the most common case of WPF content hosted via HwndSource
+                var processWindows = new List<IntPtr>();
+                EnumWindows((hWnd, lParam) =>
+                {
+                    uint processId;
+                    GetWindowThreadProcessId(hWnd, out processId);
+                    if (processId == currentProcess.Id)
+                    {
+                        processWindows.Add(hWnd);
+                    }
+                    return true;
+                }, IntPtr.Zero);
+
+                // Check each window and its immediate child windows for WPF content
+                foreach (var hWnd in processWindows)
+                {
+                    try
+                    {
+                        // Check the window itself for WPF content
+                        var source = System.Windows.Interop.HwndSource.FromHwnd(hWnd);
+                        if (source?.RootVisual is DependencyObject rootVisual)
+                        {
+                            if (!wpfControls.Any(w => ReferenceEquals(w, rootVisual)))
+                            {
+                                wpfControls.Add(rootVisual);
+                                LogMessage($"Found WPF content in window handle {hWnd}");
+                            }
+                        }
+
+                        // Check immediate child windows (covers ElementHost scenarios)
+                        EnumChildWindows(hWnd, (childHWnd, lParam) =>
+                        {
+                            try
+                            {
+                                var childSource = System.Windows.Interop.HwndSource.FromHwnd(childHWnd);
+                                if (childSource?.RootVisual is DependencyObject childRootVisual)
+                                {
+                                    if (!wpfControls.Any(w => ReferenceEquals(w, childRootVisual)))
+                                    {
+                                        wpfControls.Add(childRootVisual);
+                                        LogMessage($"Found WPF content in child window handle {childHWnd}");
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // Silently ignore errors when checking child windows
+                            }
+                            return true;
+                        }, IntPtr.Zero);
+                    }
+                    catch
+                    {
+                        // Silently ignore errors when checking windows
+                    }
+                }
+
+                LogMessage($"Found {wpfControls.Count} WPF controls hosted in WinForms");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"Error in GetAllWpfControlsHostedInWinforms: {ex.Message}");
+            }
+            
+            return wpfControls;
+        }
+
+        // P/Invoke declarations for window enumeration
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+        
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        private static string ProcessGetVisualTreeCommand()
         {
             try
             {
@@ -992,26 +537,32 @@ namespace WpfInspector
                 {
                     try
                     {
-                        // Get the main window
-                        var mainWindow = Application.Current?.MainWindow;
-                        if (mainWindow == null)
+                        // Get all WPF controls (windows and nested in WinForms)
+                        var wpfControls = GetAllWpfControls().ToList();
+                        
+                        if (wpfControls.Count == 0)
                         {
                             result = new { 
                                 success = false, 
-                                error = "Main window not found" 
+                                error = "No WPF controls found" 
                             };
                             return;
                         }
 
-                        // Create visual tree representation
-                        var visualTree = CreateVisualTreeNode(mainWindow);
+                        // Create context for tracking DataContexts
+                        var dataContextTracker = new DataContextTracker();
+                        
+                        // Create visual tree representations for all WPF controls
+                        var visualTrees = wpfControls.Select(control => 
+                            CreateVisualTreeNode(control, dataContextTracker, null)).ToList();
                         
                         result = new
                         {
                             success = true,
                             processId = System.Diagnostics.Process.GetCurrentProcess().Id,
-                            mainWindowTitle = mainWindow.Title,
-                            visualTree = visualTree,
+                            controlCount = wpfControls.Count,
+                            visualTrees = visualTrees,
+                            dataContexts = dataContextTracker.GetDataContexts(),
                             timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC")
                         };
                     }
@@ -1027,7 +578,7 @@ namespace WpfInspector
                     return JsonSerializer.Serialize(new { 
                         success = false, 
                         error = $"Error accessing UI thread: {dispatcherException.Message}" 
-                    });
+                    }, GetJsonOptions());
                 }
 
                 if (result == null)
@@ -1035,13 +586,10 @@ namespace WpfInspector
                     return JsonSerializer.Serialize(new { 
                         success = false, 
                         error = "Failed to get visual tree - no result returned" 
-                    });
+                    }, GetJsonOptions());
                 }
 
-                return JsonSerializer.Serialize(result, new JsonSerializerOptions 
-                { 
-                    WriteIndented = true 
-                });
+                return JsonSerializer.Serialize(result, GetJsonOptions());
             }
             catch (Exception ex)
             {
@@ -1049,119 +597,150 @@ namespace WpfInspector
                 return JsonSerializer.Serialize(new { 
                     success = false, 
                     error = $"Error getting visual tree: {ex.Message}" 
-                });
+                }, GetJsonOptions());
             }
         }
 
-        private static object CreateVisualTreeNode(DependencyObject element)
+        private static string ProcessGetElementByHashcodeCommand(JsonElement commandElement)
         {
             try
             {
-                var elementInfo = new Dictionary<string, object>
-                {
-                    ["type"] = element.GetType().FullName ?? "Unknown",
-                    ["hashCode"] = element.GetHashCode(),
-                };
+                LogMessage("Processing GET_ELEMENT_BY_HASHCODE command");
 
-                // Add common properties based on element type
+                if (!commandElement.TryGetProperty("type", out var typeElement))
+                {
+                    return JsonSerializer.Serialize(new { success = false, error = "Missing 'type' parameter" }, GetJsonOptions());
+                }
+                
+                if (!commandElement.TryGetProperty("hashcode", out var hashcodeElement))
+                {
+                    return JsonSerializer.Serialize(new { success = false, error = "Missing 'hashcode' parameter" }, GetJsonOptions());
+                }
+                
+                var typeName = typeElement.GetString();
+                var hashcode = hashcodeElement.GetInt32();
+
+                if (string.IsNullOrWhiteSpace(typeName))
+                {
+                    return JsonSerializer.Serialize(new { success = false, error = "type cannot be empty" }, GetJsonOptions());
+                }
+
+                LogMessage($"Looking for element with type: {typeName}, hashcode: {hashcode}");
+
+                // Execute on the UI thread using Dispatcher
+                object? result = null;
+                Exception? dispatcherException = null;
+
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        var targetObject = FindObjectByTypeAndHashCode(typeName, hashcode);
+                        
+                        if (targetObject == null)
+                        {
+                            LogMessage($"Element not found - Type: {typeName}, HashCode: {hashcode}");
+                            result = new { 
+                                success = false, 
+                                error = $"{typeName} with hashcode {hashcode} not found in any window" 
+                            };
+                            return;
+                        }
+
+                        if (!(targetObject is DependencyObject dependencyObject))
+                        {
+                            LogMessage($"Found object is not a DependencyObject - Type: {targetObject.GetType().Name}");
+                            result = new { 
+                                success = false, 
+                                error = $"Found object with hashcode {hashcode} is not a DependencyObject" 
+                            };
+                            return;
+                        }
+
+                        LogMessage($"Found element: {dependencyObject.GetType().Name} with hashcode {dependencyObject.GetHashCode()}");
+
+                        // Create context for tracking DataContexts (for consistency with full tree)
+                        var dataContextTracker = new DataContextTracker();
+                        
+                        // Create element representation without children
+                        var elementNode = CreateVisualTreeNodeWithoutChildren(dependencyObject, dataContextTracker, null);
+                        
+                        result = new
+                        {
+                            success = true,
+                            message = "Element retrieved successfully",
+                            processId = System.Diagnostics.Process.GetCurrentProcess().Id,
+                            type = typeName,
+                            hashcode = hashcode,
+                            element = elementNode,
+                            dataContexts = dataContextTracker.GetDataContexts(),
+                            timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC")
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        dispatcherException = ex;
+                        LogMessage($"Error in Dispatcher.Invoke for element retrieval: {ex.Message}");
+                    }
+                });
+
+                if (dispatcherException != null)
+                {
+                    return JsonSerializer.Serialize(new { 
+                        success = false, 
+                        error = $"Error accessing UI thread: {dispatcherException.Message}" 
+                    }, GetJsonOptions());
+                }
+
+                if (result == null)
+                {
+                    return JsonSerializer.Serialize(new { 
+                        success = false, 
+                        error = "Failed to get element - no result returned" 
+                    }, GetJsonOptions());
+                }
+
+                return JsonSerializer.Serialize(result, GetJsonOptions());
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"Error in ProcessGetElementByHashcodeCommand: {ex.Message}");
+                return JsonSerializer.Serialize(new { 
+                    success = false, 
+                    error = $"Error getting element by hashcode: {ex.Message}" 
+                }, GetJsonOptions());
+            }
+        }
+
+        private static Dictionary<string, object> CreateVisualTreeNode(DependencyObject element, DataContextTracker dataContextTracker, object? parentDataContext)
+        {
+            try
+            {
+                // Get the base element info without children
+                var elementInfo = CreateVisualTreeNodeWithoutChildren(element, dataContextTracker, parentDataContext);
+                
+                // Determine the current DataContext for child processing
+                object? currentDataContext = parentDataContext;
                 if (element is FrameworkElement fe)
                 {
-                    if(!string.IsNullOrEmpty(fe.Name))
-                        elementInfo["name"] = fe.Name ?? "";
-
-                    var dataContext = fe.DataContext;
-                    if (dataContext != null)
+                    var elementDataContext = fe.DataContext;
+                    if (elementDataContext != null && !ReferenceEquals(elementDataContext, parentDataContext))
                     {
-                        elementInfo["dataContext"] = dataContext.GetType().FullName ?? "Unknown";
-                        elementInfo["dataContextHashCode"] = dataContext.GetHashCode();
+                        currentDataContext = elementDataContext;
                     }
                 }
 
-                if (element is Window window)
+                // Add children if present
+                var children = GetChildren(element)
+                    .Select(child => CreateVisualTreeNode(child, dataContextTracker, currentDataContext))
+                    .ToList();
+
+                // Only include childCount and children if there are actual children
+                if (children.Count > 0)
                 {
-                    elementInfo["title"] = window.Title;
+                    elementInfo["childCount"] = children.Count;
+                    elementInfo["children"] = children;
                 }
-
-                if (element is ContentControl contentControl)
-                {
-                    if (contentControl.Content != null)
-                        elementInfo["content"] = contentControl.Content.ToString();
-                }
-
-                if (element is TextBlock textBlock)
-                {
-                    elementInfo["text"] = textBlock.Text ?? "";
-                }
-
-                if (element is Button button)
-                {
-                    elementInfo["content"] = button.Content?.ToString() ?? "";
-                    var binding = BindingOperations.GetBinding(button, ButtonBase.CommandProperty);
-                    var bindingPath = binding?.Path?.Path;
-                    if (!string.IsNullOrEmpty(bindingPath))
-                    {
-                        elementInfo["commandBindingPath"] = bindingPath;
-                    }
-
-                }
-
-                if (element is TextBox textBox)
-                {
-                    elementInfo["text"] = textBox.Text ?? "";
-                    elementInfo["isReadOnly"] = textBox.IsReadOnly;
-                }
-
-                if (element is DataGrid dataGrid)
-                {
-                    elementInfo["itemsCount"] = dataGrid.Items.Count;
-
-                    var contextMenu = dataGrid.ContextMenu;
-                    if (contextMenu != null)
-                    {
-                        elementInfo["contextMenuCount"] = contextMenu.Items.Count;
-                        elementInfo["contextMenuItems"] = contextMenu.Items.OfType<DependencyObject>().Select(CreateVisualTreeNode).ToList();
-                    }
-                }
-
-                if (element is MenuItem menuItem)
-                {
-                    elementInfo["header"] = menuItem.Header;
-                    var binding = BindingOperations.GetBinding(menuItem, ButtonBase.CommandProperty);
-                    var bindingPath = binding?.Path?.Path;
-                    if (!string.IsNullOrEmpty(bindingPath))
-                    {
-                        elementInfo["commandBindingPath"] = bindingPath;
-                    }
-
-                    if (menuItem.Items.Count > 0)
-                    {
-                        elementInfo["contextMenuCount"] = menuItem.Items.Count;
-                        elementInfo["contextMenuItems"] = menuItem.Items.OfType<DependencyObject>().Select(CreateVisualTreeNode).ToList();
-                    }
-                }
-
-                // Special handling for DataGridCell - extract actual content directly
-                if (element is DataGridCell dataGridCell)
-                {
-                    var leafNodes = FindLeafNodesInCell(dataGridCell);
-                    
-                    elementInfo["childCount"] = leafNodes.Count;
-                    elementInfo["cells"] = leafNodes.Select(CreateVisualTreeNode).ToList();
-                    
-                    return elementInfo;
-                }
-
-                // Get children normally for all other elements, including DataGridRow
-                var children = new List<object>();
-                int childCount = VisualTreeHelper.GetChildrenCount(element);
-                for (int i = 0; i < childCount; i++)
-                {
-                    var child = VisualTreeHelper.GetChild(element, i);
-                    children.Add(CreateVisualTreeNode(child));
-                }
-
-                elementInfo["childCount"] = childCount;
-                elementInfo["children"] = children;
 
                 return elementInfo;
             }
@@ -1178,52 +757,486 @@ namespace WpfInspector
             }
         }
 
-        private static List<DependencyObject> FindLeafNodesInCell(DependencyObject parent)
-        {
-            var leafNodes = new List<DependencyObject>();
-            
-            int childCount = VisualTreeHelper.GetChildrenCount(parent);
-            
-            // If this node has no children, it's a leaf node
-            if (childCount == 0)
-            {
-                // Skip certain container types that aren't meaningful content
-                if (!(parent is Border || parent is ContentPresenter || parent is Panel))
-                {
-                    leafNodes.Add(parent);
-                }
-                return leafNodes;
-            }
-            
-            // If it has children, recursively search
-            for (int i = 0; i < childCount; i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                leafNodes.AddRange(FindLeafNodesInCell(child));
-            }
-            
-            return leafNodes;
-        }
-
-        /// <summary>
-        /// Cleanup method - should be called when the inspector is being unloaded
-        /// </summary>
-        public static void Cleanup()
+        private static Dictionary<string, object> CreateVisualTreeNodeWithoutChildren(DependencyObject element, DataContextTracker dataContextTracker, object? parentDataContext)
         {
             try
             {
-                LogMessage("WpfInspector.Cleanup called");
-                
-                _cancellationTokenSource?.Cancel();
-                _pipeServer?.Dispose();
-                _serverTask?.Wait(5000); // Wait up to 5 seconds for cleanup
-                
-                LogMessage("WpfInspector cleanup completed");
+                var elementInfo = new Dictionary<string, object>
+                {
+                    ["type"] = element.GetType().FullName ?? "Unknown",
+                    ["hashCode"] = element.GetHashCode(),
+                };
+
+                // Handle DataContext
+                if (element is FrameworkElement fe)
+                {
+                    var elementDataContext = fe.DataContext;
+                    if (elementDataContext != null && !ReferenceEquals(elementDataContext, parentDataContext))
+                    {
+                        // This element has a different DataContext than its parent
+                        var dataContextId = dataContextTracker.RegisterDataContext(elementDataContext);
+                        if (dataContextId != null)
+                        {
+                            elementInfo["dataContextId"] = dataContextId;
+                        }
+                    }
+                }
+
+                // Get all dependency properties for this type, ordered from most specific to base classes
+                var dependencyProperties = DependencyPropertyCache.GetDependencyProperties(element.GetType());
+                foreach (var dp in dependencyProperties)
+                {
+                    // Skip DataContext property as we handle it separately
+                    if (dp.Name == "DataContext")
+                        continue;
+
+                    var value = GetValue(element, dp);
+                    if (value != null)
+                    {
+                        elementInfo[dp.Name] = value;
+                    }
+                }
+
+                // Add AutomationPeer information if element is a UIElement
+                if (element is UIElement uiElement)
+                {
+                    var automationPeerInfo = AutomationPeerHandler.GetAutomationPeerInfo(uiElement);
+                    if (automationPeerInfo != null)
+                    {
+                        elementInfo["automationPeer"] = automationPeerInfo;
+                    }
+                }
+
+                // No children for single element retrieval
+                return elementInfo;
             }
             catch (Exception ex)
             {
-                LogMessage($"Error in WpfInspector.Cleanup: {ex}");
+                LogMessage($"Error creating visual tree node for {element?.GetType().Name}: {ex.Message}");
+                return new Dictionary<string, object>
+                {
+                    ["type"] = element?.GetType().Name ?? "Unknown",
+                    ["error"] = ex.Message
+                };
             }
         }
+
+        private static IEnumerable<DependencyObject> GetChildrenRecursive(DependencyObject element)
+        {
+            var dependencyObjects = new Stack<DependencyObject>();
+
+            dependencyObjects.Push(element);
+
+            while (dependencyObjects.TryPop(out var next))
+            {
+                yield return next;
+
+                foreach (var dependencyObject in GetChildren(next))
+                {
+                    dependencyObjects.Push(dependencyObject);
+                }
+            }
+        }
+
+        private static IEnumerable<DependencyObject> GetChildren(DependencyObject element)
+        {
+            // Get children from LogicalTreeHelper
+            foreach (object logicalChild in LogicalTreeHelper.GetChildren(element))
+            {
+                if (logicalChild is DependencyObject depObj)
+                {
+                    yield return depObj;
+                }
+            }
+
+            if (element is ItemsControl itemsControl)
+            {
+                foreach (var item in itemsControl.Items)
+                {
+                    if (item is DependencyObject)
+                    {
+                        continue;
+                    }
+
+                    var container = itemsControl.ItemContainerGenerator.ContainerFromItem(item);
+
+                    if (container is not null)
+                    {
+                        yield return container;
+                    }
+                }
+            }
+        }
+
+        // Property filtering configuration
+        private static readonly HashSet<string> InteractionPropertyNames = new()
+        {
+            "Content", "Text", "Header", "Title", "Name", "ToolTip",
+            "IsEnabled", "IsSelected", "IsChecked", "IsExpanded", "IsPressed",
+            "Visibility", "Command", "CommandParameter", "Value", "EditValue"
+        };
+
+        private static readonly HashSet<string> LayoutPropertyNames = new()
+        {
+            "Width", "Height", "MinWidth", "MinHeight", "MaxWidth", "MaxHeight",
+            "Margin", "Padding", "HorizontalAlignment", "VerticalAlignment",
+            "Row", "Column", "RowSpan", "ColumnSpan", "Panel.ZIndex"
+        };
+
+        private static bool IsInteractionProperty(DependencyProperty dp)
+        {
+            return InteractionPropertyNames.Contains(dp.Name);
+        }
+
+        private static bool IsLayoutProperty(DependencyProperty dp)
+        {
+            return LayoutPropertyNames.Contains(dp.Name) || 
+                   dp.Name.Contains("Grid.") || dp.Name.Contains("Canvas.") || 
+                   dp.Name.Contains("DockPanel.");
+        }
+
+        private static bool ShouldExcludeProperty(DependencyProperty dp, object? value)
+        {
+            // Exclude computed/internal properties
+            if (dp.Name.StartsWith("Actual")) return true;  // ActualWidth, ActualHeight
+            if (dp.Name.Contains("Internal")) return true;
+            if (dp.Name.Contains("Cache")) return true;
+            
+            // Exclude complex framework objects that don't provide user value
+            if (value is Style || value is ControlTemplate || value is DataTemplate) return true;
+            if (value?.GetType().Name.Contains("Collection") == true && dp.Name.EndsWith("Effects")) return true;
+            
+            // Exclude properties with default/framework values
+            if (dp.Name == "Resources" && value?.ToString() == "System.Windows.ResourceDictionary") return true;
+            if (dp.Name.EndsWith("Brush") && value?.GetType().Name == "SolidColorBrush") 
+            {
+                // Only include if it's not a default system brush
+                return IsSystemDefaultBrush(value);
+            }
+            
+            return false;
+        }
+
+        private static bool IsSystemDefaultBrush(object brush)
+        {
+            // Check if it's a system default brush (simplified heuristic)
+            return brush.GetHashCode() < 100000;
+        }
+
+        private static bool HasMeaningfulValue(DependencyObject element, DependencyProperty dp, object? value)
+        {
+            if (value == null) return false;
+            
+            // Always include bindings (they're meaningful for LLM context)
+            if (BindingOperations.GetBinding(element, dp) != null) return true;
+            if (BindingOperations.GetBindingExpression(element, dp) != null) return true;
+            if (BindingOperations.GetMultiBindingExpression(element, dp) != null) return true;
+            if (BindingOperations.GetPriorityBindingExpression(element, dp) != null) return true;
+            
+            // Exclude generic type references that don't provide user context
+            var valueString = value.ToString();
+            if (valueString?.StartsWith("System.Windows.") == true && 
+                !IsInteractionProperty(dp) && !IsLayoutProperty(dp)) return false;
+            
+            // Include user-set values for interaction properties
+            if (IsInteractionProperty(dp)) return true;
+            
+            // Include layout values that affect positioning (but not default values)
+            if (IsLayoutProperty(dp) && !IsDefaultLayoutValue(dp.Name, value)) return true;
+            
+            return false;
+        }
+
+        private static bool IsDefaultLayoutValue(string propertyName, object value)
+        {
+            var valueString = value.ToString();
+            return propertyName switch
+            {
+                "Width" or "Height" => valueString == "NaN",
+                "Margin" or "Padding" => valueString == "0,0,0,0",
+                "HorizontalAlignment" => valueString == "Stretch",
+                "VerticalAlignment" => valueString == "Stretch",
+                _ => false
+            };
+        }
+
+        private static object? GetValue(DependencyObject element, DependencyProperty dp)
+        {
+            try
+            {
+                // First check if value differs from default (existing logic)
+                var value = DependencyPropertyCache.GetNonDefaultValue(element, dp);
+                
+                // Check if the property has a binding (always include bindings)
+                var binding = BindingOperations.GetBinding(element, dp);
+                if (binding != null)
+                {
+                    return GetBindingInfo(element, dp, binding);
+                }
+
+                // Check for other types of expressions (MultiBinding, PriorityBinding, etc.)
+                var bindingExpression = BindingOperations.GetBindingExpression(element, dp);
+                if (bindingExpression != null)
+                {
+                    return GetBindingExpressionInfo(element, dp, bindingExpression);
+                }
+
+                var multiBindingExpression = BindingOperations.GetMultiBindingExpression(element, dp);
+                if (multiBindingExpression != null)
+                {
+                    return GetMultiBindingInfo(element, dp, multiBindingExpression);
+                }
+
+                var priorityBindingExpression = BindingOperations.GetPriorityBindingExpression(element, dp);
+                if (priorityBindingExpression != null)
+                {
+                    return GetPriorityBindingInfo(element, dp, priorityBindingExpression);
+                }
+
+                // Apply programmatic filtering for non-binding properties
+                if (value != null && ShouldExcludeProperty(dp, value))
+                    return null;
+                    
+                // Check if the property has meaningful value for LLM context
+                if (value != null && !HasMeaningfulValue(element, dp, value))
+                    return null;
+
+                // Return simplified value format for LLM consumption
+                if (value != null)
+                {
+                    return value switch
+                    {
+                        SolidColorBrush brush => brush.Color.ToString(),
+                        Thickness thickness => thickness.ToString(),
+                        _ => SerializePropertyValue(value)
+                    };
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new
+                {
+                    type = "error",
+                    error = ex.Message
+                };
+            }
+        }
+
+        private static object GetBindingInfo(DependencyObject element, DependencyProperty dp, Binding binding)
+        {
+            var bindingExpression = BindingOperations.GetBindingExpression(element, dp);
+            
+            var info = new Dictionary<string, object>
+            {
+                ["type"] = "binding",
+                ["path"] = binding.Path?.Path ?? "",
+                ["mode"] = binding.Mode.ToString()
+            };
+
+            // Add source information
+            if (binding.Source != null)
+            {
+                info["source"] = binding.Source.GetType().Name;
+            }
+            else if (!string.IsNullOrEmpty(binding.ElementName))
+            {
+                info["elementName"] = binding.ElementName;
+            }
+            else if (binding.RelativeSource != null)
+            {
+                info["relativeSource"] = binding.RelativeSource.Mode.ToString();
+            }
+            else
+            {
+                info["source"] = "DataContext";
+            }
+
+            // Add converter information
+            if (binding.Converter != null)
+            {
+                info["converter"] = binding.Converter.GetType().Name;
+                if (binding.ConverterParameter != null)
+                {
+                    info["converterParameter"] = SerializePropertyValue(binding.ConverterParameter);
+                }
+            }
+
+            // Add binding validation and error information
+            if (bindingExpression != null)
+            {
+                if (bindingExpression.HasError)
+                {
+                    info["hasError"] = true;
+                    if (bindingExpression.ValidationError != null)
+                    {
+                        info["error"] = bindingExpression.ValidationError.ErrorContent?.ToString() ?? "Validation error";
+                    }
+                }
+
+                if (bindingExpression.HasValidationError)
+                {
+                    info["hasValidationError"] = true;
+                }
+
+                // Add resolved value if no errors
+                try
+                {
+                    var resolvedValue = element.GetValue(dp);
+                    info["resolvedValue"] = SerializePropertyValue(resolvedValue);
+                }
+                catch (Exception ex)
+                {
+                    info["valueError"] = ex.Message;
+                }
+            }
+
+            return info;
+        }
+
+        private static object GetBindingExpressionInfo(DependencyObject element, DependencyProperty dp, BindingExpression bindingExpression)
+        {
+            var info = new Dictionary<string, object>
+            {
+                ["type"] = "bindingExpression"
+            };
+
+            if (bindingExpression.ParentBinding != null)
+            {
+                var binding = bindingExpression.ParentBinding;
+                info["path"] = binding.Path?.Path ?? "";
+                info["mode"] = binding.Mode.ToString();
+            }
+
+            if (bindingExpression.HasError)
+            {
+                info["hasError"] = true;
+                if (bindingExpression.ValidationError != null)
+                {
+                    info["error"] = bindingExpression.ValidationError.ErrorContent?.ToString() ?? "Validation error";
+                }
+            }
+
+            try
+            {
+                var resolvedValue = element.GetValue(dp);
+                info["resolvedValue"] = SerializePropertyValue(resolvedValue);
+            }
+            catch (Exception ex)
+            {
+                info["valueError"] = ex.Message;
+            }
+
+            return info;
+        }
+
+        private static object GetMultiBindingInfo(DependencyObject element, DependencyProperty dp, MultiBindingExpression multiBindingExpression)
+        {
+            var info = new Dictionary<string, object>
+            {
+                ["type"] = "multiBinding"
+            };
+
+            if (multiBindingExpression.ParentMultiBinding != null)
+            {
+                var multiBinding = multiBindingExpression.ParentMultiBinding;
+                info["bindingCount"] = multiBinding.Bindings.Count;
+                
+                if (multiBinding.Converter != null)
+                {
+                    info["converter"] = multiBinding.Converter.GetType().Name;
+                }
+            }
+
+            if (multiBindingExpression.HasError)
+            {
+                info["hasError"] = true;
+                if (multiBindingExpression.ValidationError != null)
+                {
+                    info["error"] = multiBindingExpression.ValidationError.ErrorContent?.ToString() ?? "Validation error";
+                }
+            }
+
+            try
+            {
+                var resolvedValue = element.GetValue(dp);
+                info["resolvedValue"] = SerializePropertyValue(resolvedValue);
+            }
+            catch (Exception ex)
+            {
+                info["valueError"] = ex.Message;
+            }
+
+            return info;
+        }
+
+        private static object GetPriorityBindingInfo(DependencyObject element, DependencyProperty dp, PriorityBindingExpression priorityBindingExpression)
+        {
+            var info = new Dictionary<string, object>
+            {
+                ["type"] = "priorityBinding"
+            };
+
+            if (priorityBindingExpression.ParentPriorityBinding != null)
+            {
+                var priorityBinding = priorityBindingExpression.ParentPriorityBinding;
+                info["bindingCount"] = priorityBinding.Bindings.Count;
+            }
+
+            if (priorityBindingExpression.HasError)
+            {
+                info["hasError"] = true;
+                if (priorityBindingExpression.ValidationError != null)
+                {
+                    info["error"] = priorityBindingExpression.ValidationError.ErrorContent?.ToString() ?? "Validation error";
+                }
+            }
+
+            try
+            {
+                var resolvedValue = element.GetValue(dp);
+                info["resolvedValue"] = SerializePropertyValue(resolvedValue);
+            }
+            catch (Exception ex)
+            {
+                info["valueError"] = ex.Message;
+            }
+
+            return info;
+        }
+
+        private static object? SerializePropertyValue(object value)
+        {
+            try
+            {
+                return value switch
+                {
+                    null => null,
+                    string s => s,
+                    bool b => b,
+                    int i => i,
+                    double d => d,
+                    float f => f,
+                    long l => l,
+                    decimal dec => dec,
+                    DateTime dt => dt.ToString("yyyy-MM-dd HH:mm:ss"),
+                    TimeSpan ts => ts.ToString(),
+                    Enum e => e.ToString(),
+                    Type t => t.FullName ?? t.Name,
+                    DependencyObject depObj => new
+                    {
+                        Type = depObj.GetType().FullName ?? depObj.GetType().Name,
+                        HashCode = depObj.GetHashCode()
+                    },
+                    _ => value.ToString()
+                };
+            }
+            catch
+            {
+                return value?.ToString();
+            }
+        }
+
     }
 }

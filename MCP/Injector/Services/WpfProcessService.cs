@@ -6,17 +6,14 @@ using System.Linq;
 using System.Management;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Injector.Models;
 using Microsoft.Extensions.Logging;
+using SnoopWpfMcpServer.Models;
 
-namespace Injector.Services
+namespace SnoopWpfMcpServer.Services
 {
     public interface IWpfProcessService
     {
         Task<List<WpfProcessInfo>> GetWpfProcessesAsync();
-        Task<WpfProcessInfo?> GetProcessInfoAsync(int processId);
-        Task<WpfProcessInfo?> FindProcessByNameAsync(string processName);
-        bool IsWpfProcess(Process process);
     }
 
     public class WpfProcessService : IWpfProcessService
@@ -85,73 +82,7 @@ namespace Injector.Services
             return wpfProcesses;
         }
 
-        public async Task<WpfProcessInfo?> GetProcessInfoAsync(int processId)
-        {
-            try
-            {
-                var process = Process.GetProcessById(processId);
-                using (process)
-                {
-                    return await CreateProcessInfoAsync(process);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error getting process info for PID {processId}");
-                return null;
-            }
-        }
-
-        public async Task<WpfProcessInfo?> FindProcessByNameAsync(string processName)
-        {
-            try
-            {
-                _logger.LogInformation($"Searching for WPF process with name: {processName}");
-                
-                var allWpfProcesses = await GetWpfProcessesAsync();
-                
-                // Try exact match first (case-insensitive)
-                var exactMatch = allWpfProcesses.FirstOrDefault(p => 
-                    string.Equals(p.ProcessName, processName, StringComparison.OrdinalIgnoreCase));
-                
-                if (exactMatch != null)
-                {
-                    _logger.LogInformation($"Found exact match for '{processName}': PID {exactMatch.ProcessId}");
-                    return exactMatch;
-                }
-                
-                // Try window title match (case-insensitive)
-                var windowTitleMatch = allWpfProcesses.FirstOrDefault(p => 
-                    !string.IsNullOrEmpty(p.MainWindowTitle) && 
-                    p.MainWindowTitle.Contains(processName, StringComparison.OrdinalIgnoreCase));
-                
-                if (windowTitleMatch != null)
-                {
-                    _logger.LogInformation($"Found window title match for '{processName}': PID {windowTitleMatch.ProcessId} - '{windowTitleMatch.MainWindowTitle}'");
-                    return windowTitleMatch;
-                }
-                
-                // Try partial process name match (case-insensitive)
-                var partialMatch = allWpfProcesses.FirstOrDefault(p => 
-                    p.ProcessName.Contains(processName, StringComparison.OrdinalIgnoreCase));
-                
-                if (partialMatch != null)
-                {
-                    _logger.LogInformation($"Found partial match for '{processName}': PID {partialMatch.ProcessId} - '{partialMatch.ProcessName}'");
-                    return partialMatch;
-                }
-                
-                _logger.LogWarning($"No WPF process found matching '{processName}'");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error searching for process by name: {processName}");
-                return null;
-            }
-        }
-
-        public bool IsWpfProcess(Process process)
+        private bool IsWpfProcess(Process process)
         {
             try
             {

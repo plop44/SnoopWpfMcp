@@ -1,72 +1,119 @@
-# WpfInspector MCP Infrastructure
-
-🚧 **Work in Progress** 🚧
+# SnoopWpfMcp - AI agent driven WPF inspector
 
 ![SnoopWpfMcp Demo](SnoopWpfMcp.gif)
 
-> **Note**: This project was "Vibe coded" (AI-assisted rapid prototyping) but it's looking very promising! 
+## What Can You Do?
 
-## Overview
+This MCP server gives AI agents the ability to understand and control any running WPF application - **the AI can do anything you can do with your mouse and keyboard, just by giving it the right prompt**.
 
-A Model Context Protocol (MCP) infrastructure for WPF applications using snoopwpf injection techniques. Allows code injection into running WPF processes and communication via Named Pipes.
+For example, you can turn any AI agent into a **QA tester** with this simple prompt:
+> *"Can you use snoop-wpf-inspector to interact with my app? You are QA trying to find some bugs, you should interact with all controls across all tabs and give me a summary of what worked and what did not."*
+
+The AI agent can:
+- **Discover and inspect** any WPF app's complete UI structure 
+- **Interact with UI elements** - click buttons, enter text, select items
+- **Take screenshots** of application windows
+- **Debug UI issues** by examining data bindings and element properties
+
+**Best results achieved with Claude Sonnet 4**.
+
+## Architecture
+
+```
+┌─────────────────┐        ┌──────────────────┐        ┌──────────────────┐
+│   AI Agent      │  HTTP  │   SnoopWpfMcp    │Process │     WPF App 1    │
+│ (GitHub Copilot,│◄──────►│   MCP Server     │Inject  │                  │
+│  Cursor, etc.)  │JSON-RPC│                  │   +    │ ┌──────────────┐ │
+│                 │        │ Tools:           │Named   │ │WpfInspector  │ │
+│                 │        │ • get_processes  │Pipes   │ │  (injected)  │ │
+│                 │        │ • ping           │◄──────►│ │• UI Tree     │ │
+│                 │        │ • get_visual_tree│        │ │• Automation  │ │
+│                 │        │ • invoke_automation       │ │• Screenshots │ │
+│                 │        │ • screenshot     │        │ └──────────────┘ │
+└─────────────────┘        └──────────────────┘        └──────────────────┘
+                                      │                           
+                                      │Process                    
+                                      │Inject                     
+                                      │   +                       
+                                      │Named                      
+                                      │Pipes                      
+                                      ▼                           
+                           ┌──────────────────┐                  
+                           │     WPF App 2    │                  
+                           │                  │                  
+                           │ ┌──────────────┐ │                  
+                           │ │WpfInspector  │ │                  
+                           │ │  (injected)  │ │                  
+                           │ │• UI Tree     │ │                  
+                           │ │• Automation  │ │                  
+                           │ │• Screenshots │ │                  
+                           │ └──────────────┘ │                  
+                           └──────────────────┘                  
+```
+
+**Flow:**
+1. AI agent calls MCP tools via HTTP/JSON-RPC
+2. MCP server discovers and injects into target WPF processes  
+3. Injected `WpfInspector` provides UI inspection via Named Pipes
+4. Real-time interaction: inspect → act → verify → repeat
 
 ## Quick Start
 
 ### As MCP Server
+First run your MCP server:
+```
+dotnet run --project .\MCP\Injector\SnoopWpfMcpServer.csproj 
+```
+
 Add this configuration to your MCP client's `mcp.json`:
 
 ```json
 {
-    "servers": {
-        "wpf-inspector": {
-            "type": "stdio",
-            "command": "dotnet",
-            "args": [
-                "run",
-                "--project",
-                "c:\\Users\\guenn\\source\\perso\\SnoopMcp\\MCP\\Injector\\Injector.csproj",
-                "--configuration",
-                "Debug"
-            ],
-            "env": {
-                "DOTNET_ENVIRONMENT": "Development"
-            }
-        }
-    },
-    "inputs": []
+      "servers": {
+          "snoop-wpf-inspector": {
+              "type": "http",
+              "url": "http://localhost:8080/mcp/rpc",
+              "capabilities": ["tools", "prompts"],
+              "env": {
+                  "DOTNET_ENVIRONMENT": "Development"
+              }                                                                                                                                                                                                                                                                                                                                                      
+          }                                                                                                                                                                                                                                                                                                                                                          
+      },                                                                                                                                                                                                                                                                                                                                                             
+      "inputs": []                                                                                                                                                                                                                                                                                                                                                   
 }
 ```
 
-## MCP Functions (KernelFunction)
+## Available Tools
 
-### Process Discovery
-- **`get_wpf_processes`**: Gets interesting WPF processes, excluding system components like explorer, TextInputHost, etc. Returns user applications and development tools that are most likely to be targets for inspection.
-- **`get_process_info`**: Gets detailed information about a specific process by Process ID, including whether it's a WPF application.
+### Discovery & Setup
+- **`get_wpf_processes`**: Find all running WPF applications ready for inspection
+- **`ping`**: Connect to and verify communication with a target WPF app
 
-### Communication & Control  
-- **`ping`**: Sends a ping command to a specified WPF process (by Process ID) and returns the response. This establishes communication with the target WPF application.
-- **`run_command`**: Executes a command on a specific UI element in a WPF application. Finds the element by type and hashcode, then executes the specified command. Supports various commands like CLICK, SET_TEXT, GET_PROPERTY, SET_PROPERTY, INVOKE_METHOD.
+### UI Interaction  
+- **`invoke_automation_peer`**: Interact with any UI element - click buttons, enter text, select items, toggle switches, and more using Windows UI Automation patterns
 
-### UI Inspection
-- **`get_visual_tree`**: Gets the visual tree of a WPF application as JSON. Takes a process ID as input and returns the complete UI structure including all controls, their properties, and hierarchy.
-- **`take_wpf_screenshot`**: Takes a screenshot of the MainWindow of a WPF application. Finds a WPF process (by PID or name) and captures a screenshot of its main window. Returns the screenshot as base64-encoded PNG data. ⚠️ **WARNING**: This function is SLOW compared to get_visual_tree. Use get_visual_tree instead for fast inspection of UI state - only use screenshots when you specifically need the visual appearance.
-
-## Components
-
-- **WpfInspector**: Injected .NET library providing UI automation via Named Pipes
-- **Injector**: Console app that performs injection and communicates with target process  
-- **TestApp**: Simple WPF test application
-
-## Key Features
-
-- ✅ Process injection using snoopwpf infrastructure
-- ✅ Visual tree inspection with element details
-- ✅ UI element interaction (click, text input, properties)
-- ✅ Screenshot capture (PNG/base64)
+### Inspection & Analysis
+- **`get_visual_tree`**: Get the complete UI structure as detailed JSON - see all controls, properties, data bindings, and hierarchy
+- **`take_wpf_screenshot`**: Capture visual screenshots of application windows (⚠️ slower than visual tree inspection)
 
 ## Logs & Troubleshooting
 
 - Logs: `%TEMP%\WpfInspector.log`
+
+---
+
+## Technical Details
+
+### Components
+- **SnoopWpfMcpServer**: MCP server that handles HTTP requests and manages WPF process interactions 
+- **WpfInspector**: Injected .NET library providing UI automation via Named Pipes
+- **TestApp**: Simple WPF test application
+
+### Key Features
+- Process injection using snoopwpf infrastructure
+- Visual tree inspection with element details
+- UI element interaction (click, text input, properties)
+- Screenshot capture (PNG/base64)
 
 ## License
 

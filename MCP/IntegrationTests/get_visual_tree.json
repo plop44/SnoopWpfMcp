@@ -1,0 +1,1841 @@
+{
+  "success": true,
+  "processId": 33236,
+  "controlCount": 1,
+  "visualTrees": [
+    {
+      "type": "TestApp.MainWindow",
+      "hashCode": 38694667,
+      "dataContextId": "dc_11809597",
+      "Title": "WPF Test Application - Enhanced Controls",
+      "Content": {
+        "Type": "System.Windows.Controls.Grid",
+        "HashCode": 12707688
+      },
+      "Width": 900,
+      "Height": 700,
+      "childCount": 1,
+      "children": [
+        {
+          "type": "System.Windows.Controls.Grid",
+          "hashCode": 12707688,
+          "childCount": 6,
+          "children": [
+            {
+              "type": "System.Windows.Controls.RowDefinition",
+              "hashCode": 47260332,
+              "Height": "Auto"
+            },
+            {
+              "type": "System.Windows.Controls.RowDefinition",
+              "hashCode": 22689808
+            },
+            {
+              "type": "System.Windows.Controls.RowDefinition",
+              "hashCode": 2881685,
+              "Height": "Auto"
+            },
+            {
+              "type": "System.Windows.Controls.TextBlock",
+              "hashCode": 25935173,
+              "Text": "WPF Test Application - Enhanced Controls Testing",
+              "Margin": "10,10,10,10",
+              "HorizontalAlignment": "Center"
+            },
+            {
+              "type": "System.Windows.Controls.TabControl",
+              "hashCode": 32089967,
+              "Padding": "2,2,2,2",
+              "Margin": "10,10,10,10",
+              "automationPeer": {
+                "controlType": "Tab",
+                "isKeyboardFocusable": true,
+                "supportedActions": [
+                  "Selection"
+                ]
+              },
+              "childCount": 6,
+              "children": [
+                {
+                  "type": "System.Windows.Controls.TabItem",
+                  "hashCode": 26758660,
+                  "IsSelected": true,
+                  "Header": "Basic Controls",
+                  "Content": {
+                    "Type": "System.Windows.Controls.ScrollViewer",
+                    "HashCode": 49150562
+                  },
+                  "Padding": "6,2,6,2",
+                  "Margin": "-2,-2,-2,0",
+                  "childCount": 1,
+                  "children": [
+                    {
+                      "type": "System.Windows.Controls.ScrollViewer",
+                      "hashCode": 49150562,
+                      "Content": {
+                        "Type": "System.Windows.Controls.StackPanel",
+                        "HashCode": 21772565
+                      },
+                      "automationPeer": {
+                        "controlType": "Pane",
+                        "isKeyboardFocusable": true,
+                        "supportedActions": [
+                          "Scroll_Status",
+                          "Scroll_Scroll",
+                          "Scroll_SetPosition"
+                        ]
+                      },
+                      "childCount": 1,
+                      "children": [
+                        {
+                          "type": "System.Windows.Controls.StackPanel",
+                          "hashCode": 21772565,
+                          "Margin": "10,10,10,10",
+                          "childCount": 14,
+                          "children": [
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 61735358,
+                              "Text": "Process Information",
+                              "Margin": "5,5,5,5"
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 18747312,
+                              "Text": "Process ID: 33236 | Process Name: TestApp",
+                              "Name": "ProcessInfoText",
+                              "Margin": "5,5,5,5"
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 34508084,
+                              "Text": "Button clicks: 0",
+                              "Name": "ClickCounterText",
+                              "Margin": "5,5,5,5"
+                            },
+                            {
+                              "type": "System.Windows.Controls.Button",
+                              "hashCode": 42137308,
+                              "Content": "Update UI",
+                              "Padding": "10,5,10,5",
+                              "Name": "UpdateButton",
+                              "Margin": "5,5,5,5",
+                              "HorizontalAlignment": "Left",
+                              "automationPeer": {
+                                "automationId": "UpdateButton",
+                                "name": "Update UI",
+                                "controlType": "Button",
+                                "isKeyboardFocusable": true,
+                                "supportedActions": [
+                                  "Invoke_Invoke"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.Button",
+                              "hashCode": 43691456,
+                              "Content": "Custom Template Button",
+                              "Padding": "15,8,15,8",
+                              "Margin": "5,5,5,5",
+                              "automationPeer": {
+                                "name": "Custom Template Button",
+                                "controlType": "Button",
+                                "isKeyboardFocusable": true,
+                                "supportedActions": [
+                                  "Invoke_Invoke"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.Separator",
+                              "hashCode": 49347015,
+                              "Margin": "0,10,0,10",
+                              "IsEnabled": false
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 41469957,
+                              "Text": "Form Controls",
+                              "Margin": "5,5,5,5"
+                            },
+                            {
+                              "type": "System.Windows.Controls.WrapPanel",
+                              "hashCode": 37685299,
+                              "childCount": 3,
+                              "children": [
+                                {
+                                  "type": "System.Windows.Controls.CheckBox",
+                                  "hashCode": 3623379,
+                                  "Content": "Option 1",
+                                  "Padding": "4,-1,0,0",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Option 1",
+                                    "controlType": "CheckBox",
+                                    "isKeyboardFocusable": true,
+                                    "supportedActions": [
+                                      "Toggle_Toggle",
+                                      "Toggle_Status"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.CheckBox",
+                                  "hashCode": 25058257,
+                                  "IsChecked": true,
+                                  "Content": "Option 2",
+                                  "Padding": "4,-1,0,0",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Option 2",
+                                    "controlType": "CheckBox",
+                                    "isKeyboardFocusable": true,
+                                    "supportedActions": [
+                                      "Toggle_Toggle",
+                                      "Toggle_Status"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.CheckBox",
+                                  "hashCode": 24197721,
+                                  "Content": "Option 3",
+                                  "Padding": "4,-1,0,0",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Option 3",
+                                    "controlType": "CheckBox",
+                                    "isKeyboardFocusable": true,
+                                    "supportedActions": [
+                                      "Toggle_Toggle",
+                                      "Toggle_Status"
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "System.Windows.Controls.StackPanel",
+                              "hashCode": 16452903,
+                              "Margin": "5,5,5,5",
+                              "childCount": 3,
+                              "children": [
+                                {
+                                  "type": "System.Windows.Controls.RadioButton",
+                                  "hashCode": 13858403,
+                                  "Content": "Choice A",
+                                  "Padding": "4,-1,0,0",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Choice A",
+                                    "controlType": "RadioButton",
+                                    "isKeyboardFocusable": true,
+                                    "supportedActions": [
+                                      "SelectionItem_Select",
+                                      "SelectionItem_AddToSelection",
+                                      "SelectionItem_RemoveFromSelection",
+                                      "SelectionItem_Status"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.RadioButton",
+                                  "hashCode": 48788849,
+                                  "IsChecked": true,
+                                  "Content": "Choice B",
+                                  "Padding": "4,-1,0,0",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Choice B",
+                                    "controlType": "RadioButton",
+                                    "isKeyboardFocusable": true,
+                                    "supportedActions": [
+                                      "SelectionItem_Select",
+                                      "SelectionItem_AddToSelection",
+                                      "SelectionItem_RemoveFromSelection",
+                                      "SelectionItem_Status"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.RadioButton",
+                                  "hashCode": 36446461,
+                                  "Content": "Choice C",
+                                  "Padding": "4,-1,0,0",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Choice C",
+                                    "controlType": "RadioButton",
+                                    "isKeyboardFocusable": true,
+                                    "supportedActions": [
+                                      "SelectionItem_Select",
+                                      "SelectionItem_AddToSelection",
+                                      "SelectionItem_RemoveFromSelection",
+                                      "SelectionItem_Status"
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "System.Windows.Controls.DatePicker",
+                              "hashCode": 59582700,
+                              "Padding": "2,2,2,2",
+                              "Width": 200,
+                              "Margin": "5,5,5,5",
+                              "HorizontalAlignment": "Left",
+                              "automationPeer": {
+                                "controlType": "Custom",
+                                "isKeyboardFocusable": true,
+                                "supportedActions": [
+                                  "Value_Get",
+                                  "Value_Set",
+                                  "ExpandCollapse_Expand",
+                                  "ExpandCollapse_Collapse",
+                                  "ExpandCollapse_Toggle",
+                                  "ExpandCollapse_Status"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.ComboBox",
+                              "hashCode": 66482253,
+                              "Padding": "6,3,5,3",
+                              "Width": 200,
+                              "Margin": "5,5,5,5",
+                              "HorizontalAlignment": "Left",
+                              "automationPeer": {
+                                "controlType": "ComboBox",
+                                "isKeyboardFocusable": true,
+                                "supportedActions": [
+                                  "ExpandCollapse_Expand",
+                                  "ExpandCollapse_Collapse",
+                                  "ExpandCollapse_Toggle",
+                                  "ExpandCollapse_Status",
+                                  "Selection",
+                                  "Scroll_Status",
+                                  "Scroll_Scroll",
+                                  "Scroll_SetPosition"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.Slider",
+                              "hashCode": 16353430,
+                              "Value": 50,
+                              "Width": 200,
+                              "Margin": "5,5,5,5",
+                              "HorizontalAlignment": "Left",
+                              "automationPeer": {
+                                "controlType": "Slider",
+                                "isKeyboardFocusable": true,
+                                "supportedActions": [
+                                  "RangeValue_Get",
+                                  "RangeValue_Set"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.ProgressBar",
+                              "hashCode": 12963143,
+                              "Value": 75,
+                              "Width": 200,
+                              "Height": 20,
+                              "Margin": "5,5,5,5",
+                              "HorizontalAlignment": "Left",
+                              "automationPeer": {
+                                "controlType": "ProgressBar",
+                                "supportedActions": [
+                                  "RangeValue_Get",
+                                  "RangeValue_Set"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.ProgressBar",
+                              "hashCode": 43381623,
+                              "Value": 35,
+                              "Width": 200,
+                              "Height": 20,
+                              "Margin": "5,5,5,5",
+                              "HorizontalAlignment": "Left",
+                              "automationPeer": {
+                                "controlType": "ProgressBar",
+                                "supportedActions": [
+                                  "RangeValue_Get",
+                                  "RangeValue_Set"
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "System.Windows.Controls.TabItem",
+                  "hashCode": 9502070,
+                  "Header": "Layout Panels",
+                  "Content": {
+                    "Type": "System.Windows.Controls.TabControl",
+                    "HashCode": 54890288
+                  },
+                  "Padding": "6,2,6,2",
+                  "childCount": 1,
+                  "children": [
+                    {
+                      "type": "System.Windows.Controls.TabControl",
+                      "hashCode": 54890288,
+                      "Padding": "2,2,2,2",
+                      "automationPeer": {
+                        "controlType": "Tab",
+                        "isOffscreen": true,
+                        "supportedActions": [
+                          "Selection"
+                        ]
+                      },
+                      "childCount": 4,
+                      "children": [
+                        {
+                          "type": "System.Windows.Controls.TabItem",
+                          "hashCode": 24250547,
+                          "Header": "DockPanel",
+                          "Content": {
+                            "Type": "System.Windows.Controls.DockPanel",
+                            "HashCode": 16928338
+                          },
+                          "Padding": "6,2,6,2",
+                          "childCount": 1,
+                          "children": [
+                            {
+                              "type": "System.Windows.Controls.DockPanel",
+                              "hashCode": 16928338,
+                              "Margin": "10,10,10,10",
+                              "childCount": 5,
+                              "children": [
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 18137316,
+                                  "Content": "Docked Top",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Docked Top",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 29018124,
+                                  "Content": "Docked Bottom",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Docked Bottom",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 59836530,
+                                  "Content": "Left",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Left",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 1657863,
+                                  "Content": "Right",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Right",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.TextBlock",
+                                  "hashCode": 14920772,
+                                  "Text": "This fills the remaining space in the DockPanel",
+                                  "Margin": "5,5,5,5",
+                                  "VerticalAlignment": "Center"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "System.Windows.Controls.TabItem",
+                          "hashCode": 69227,
+                          "Header": "WrapPanel",
+                          "Content": {
+                            "Type": "System.Windows.Controls.ScrollViewer",
+                            "HashCode": 623043
+                          },
+                          "Padding": "6,2,6,2",
+                          "childCount": 1,
+                          "children": [
+                            {
+                              "type": "System.Windows.Controls.ScrollViewer",
+                              "hashCode": 623043,
+                              "Content": {
+                                "Type": "System.Windows.Controls.WrapPanel",
+                                "HashCode": 5607390
+                              },
+                              "automationPeer": {
+                                "controlType": "Pane",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "Scroll_Status",
+                                  "Scroll_Scroll",
+                                  "Scroll_SetPosition"
+                                ]
+                              },
+                              "childCount": 1,
+                              "children": [
+                                {
+                                  "type": "System.Windows.Controls.WrapPanel",
+                                  "hashCode": 5607390,
+                                  "Margin": "10,10,10,10",
+                                  "childCount": 8,
+                                  "children": [
+                                    {
+                                      "type": "System.Windows.Controls.Button",
+                                      "hashCode": 50466518,
+                                      "Content": "Button 1",
+                                      "Padding": "10,5,10,5",
+                                      "Width": 80,
+                                      "Margin": "5,5,5,5",
+                                      "automationPeer": {
+                                        "name": "Button 1",
+                                        "controlType": "Button",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "Invoke_Invoke"
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "type": "System.Windows.Controls.Button",
+                                      "hashCode": 51545483,
+                                      "Content": "Button 2",
+                                      "Padding": "10,5,10,5",
+                                      "Width": 80,
+                                      "Margin": "5,5,5,5",
+                                      "automationPeer": {
+                                        "name": "Button 2",
+                                        "controlType": "Button",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "Invoke_Invoke"
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "type": "System.Windows.Controls.Button",
+                                      "hashCode": 61256166,
+                                      "Content": "Button 3",
+                                      "Padding": "10,5,10,5",
+                                      "Width": 80,
+                                      "Margin": "5,5,5,5",
+                                      "automationPeer": {
+                                        "name": "Button 3",
+                                        "controlType": "Button",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "Invoke_Invoke"
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "type": "System.Windows.Controls.Button",
+                                      "hashCode": 14434584,
+                                      "Content": "Button 4",
+                                      "Padding": "10,5,10,5",
+                                      "Width": 80,
+                                      "Margin": "5,5,5,5",
+                                      "automationPeer": {
+                                        "name": "Button 4",
+                                        "controlType": "Button",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "Invoke_Invoke"
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "type": "System.Windows.Controls.Button",
+                                      "hashCode": 62802394,
+                                      "Content": "Button 5",
+                                      "Padding": "10,5,10,5",
+                                      "Width": 80,
+                                      "Margin": "5,5,5,5",
+                                      "automationPeer": {
+                                        "name": "Button 5",
+                                        "controlType": "Button",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "Invoke_Invoke"
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "type": "System.Windows.Controls.Button",
+                                      "hashCode": 28350637,
+                                      "Content": "Button 6",
+                                      "Padding": "10,5,10,5",
+                                      "Width": 80,
+                                      "Margin": "5,5,5,5",
+                                      "automationPeer": {
+                                        "name": "Button 6",
+                                        "controlType": "Button",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "Invoke_Invoke"
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "type": "System.Windows.Controls.Button",
+                                      "hashCode": 53829147,
+                                      "Content": "Button 7",
+                                      "Padding": "10,5,10,5",
+                                      "Width": 80,
+                                      "Margin": "5,5,5,5",
+                                      "automationPeer": {
+                                        "name": "Button 7",
+                                        "controlType": "Button",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "Invoke_Invoke"
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "type": "System.Windows.Controls.Button",
+                                      "hashCode": 14700275,
+                                      "Content": "Button 8",
+                                      "Padding": "10,5,10,5",
+                                      "Width": 80,
+                                      "Margin": "5,5,5,5",
+                                      "automationPeer": {
+                                        "name": "Button 8",
+                                        "controlType": "Button",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "Invoke_Invoke"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "System.Windows.Controls.TabItem",
+                          "hashCode": 65193616,
+                          "Header": "UniformGrid",
+                          "Content": {
+                            "Type": "System.Windows.Controls.Primitives.UniformGrid",
+                            "HashCode": 49871633
+                          },
+                          "Padding": "6,2,6,2",
+                          "childCount": 1,
+                          "children": [
+                            {
+                              "type": "System.Windows.Controls.Primitives.UniformGrid",
+                              "hashCode": 49871633,
+                              "Margin": "10,10,10,10",
+                              "childCount": 6,
+                              "children": [
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 46191521,
+                                  "Content": "1,1",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "1,1",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 13070512,
+                                  "Content": "1,2",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "1,2",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 50525752,
+                                  "Content": "1,3",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "1,3",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 52078584,
+                                  "Content": "2,1",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "2,1",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 66054074,
+                                  "Content": "2,2",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "2,2",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 57615760,
+                                  "Content": "2,3",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "2,3",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "System.Windows.Controls.TabItem",
+                          "hashCode": 48779793,
+                          "Header": "Canvas",
+                          "Content": {
+                            "Type": "System.Windows.Controls.Canvas",
+                            "HashCode": 36364960
+                          },
+                          "Padding": "6,2,6,2",
+                          "childCount": 1,
+                          "children": [
+                            {
+                              "type": "System.Windows.Controls.Canvas",
+                              "hashCode": 36364960,
+                              "Margin": "10,10,10,10",
+                              "childCount": 4,
+                              "children": [
+                                {
+                                  "type": "System.Windows.Shapes.Rectangle",
+                                  "hashCode": 58849189,
+                                  "Width": 60,
+                                  "Height": 40
+                                },
+                                {
+                                  "type": "System.Windows.Shapes.Ellipse",
+                                  "hashCode": 59880657,
+                                  "Width": 80,
+                                  "Height": 60
+                                },
+                                {
+                                  "type": "System.Windows.Controls.TextBlock",
+                                  "hashCode": 2055005,
+                                  "Text": "Canvas Positioning",
+                                  "Margin": "5,5,5,5"
+                                },
+                                {
+                                  "type": "System.Windows.Controls.Button",
+                                  "hashCode": 18495050,
+                                  "Content": "Canvas Button",
+                                  "Padding": "10,5,10,5",
+                                  "Margin": "5,5,5,5",
+                                  "automationPeer": {
+                                    "name": "Canvas Button",
+                                    "controlType": "Button",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "Invoke_Invoke"
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "System.Windows.Controls.TabItem",
+                  "hashCode": 18409771,
+                  "Header": "Data Controls",
+                  "Content": {
+                    "Type": "System.Windows.Controls.Grid",
+                    "HashCode": 32237730
+                  },
+                  "Padding": "6,2,6,2",
+                  "childCount": 1,
+                  "children": [
+                    {
+                      "type": "System.Windows.Controls.Grid",
+                      "hashCode": 32237730,
+                      "Margin": "10,10,10,10",
+                      "childCount": 4,
+                      "children": [
+                        {
+                          "type": "System.Windows.Controls.ColumnDefinition",
+                          "hashCode": 21704116
+                        },
+                        {
+                          "type": "System.Windows.Controls.ColumnDefinition",
+                          "hashCode": 61119323
+                        },
+                        {
+                          "type": "System.Windows.Controls.StackPanel",
+                          "hashCode": 13202999,
+                          "Margin": "5,5,5,5",
+                          "childCount": 6,
+                          "children": [
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 51718129,
+                              "Text": "ListBox",
+                              "Margin": "5,5,5,5"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ListBox",
+                              "hashCode": 62809978,
+                              "Height": 100,
+                              "Margin": "5,5,5,5",
+                              "automationPeer": {
+                                "controlType": "List",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "Selection"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 54443429,
+                              "Text": "ListView",
+                              "Margin": "5,5,5,5"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ListView",
+                              "hashCode": 20228817,
+                              "Height": 100,
+                              "Margin": "5,5,5,5",
+                              "automationPeer": {
+                                "controlType": "List",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "Selection"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 47841633,
+                              "Text": "ComboBox",
+                              "Margin": "5,5,5,5"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ComboBox",
+                              "hashCode": 27921517,
+                              "Text": "Item 1",
+                              "Padding": "6,3,5,3",
+                              "Margin": "5,5,5,5",
+                              "automationPeer": {
+                                "controlType": "ComboBox",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "ExpandCollapse_Expand",
+                                  "ExpandCollapse_Collapse",
+                                  "ExpandCollapse_Toggle",
+                                  "ExpandCollapse_Status",
+                                  "Selection",
+                                  "Scroll_Status",
+                                  "Scroll_Scroll",
+                                  "Scroll_SetPosition"
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "System.Windows.Controls.StackPanel",
+                          "hashCode": 49967061,
+                          "Margin": "5,5,5,5",
+                          "childCount": 2,
+                          "children": [
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 47050372,
+                              "Text": "TreeView",
+                              "Margin": "5,5,5,5"
+                            },
+                            {
+                              "type": "System.Windows.Controls.TreeView",
+                              "hashCode": 20800170,
+                              "Padding": "1,1,1,1",
+                              "Height": 200,
+                              "Margin": "5,5,5,5",
+                              "automationPeer": {
+                                "controlType": "Tree",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "Selection"
+                                ]
+                              },
+                              "childCount": 2,
+                              "children": [
+                                {
+                                  "type": "System.Windows.Controls.TreeViewItem",
+                                  "hashCode": 7092232,
+                                  "IsExpanded": true,
+                                  "Header": "Root Item 1",
+                                  "HorizontalContentAlignment": {
+                                    "type": "binding",
+                                    "path": "HorizontalContentAlignment",
+                                    "mode": "Default",
+                                    "relativeSource": "FindAncestor",
+                                    "resolvedValue": "Left"
+                                  },
+                                  "VerticalContentAlignment": {
+                                    "type": "binding",
+                                    "path": "VerticalContentAlignment",
+                                    "mode": "Default",
+                                    "relativeSource": "FindAncestor",
+                                    "resolvedValue": "Center"
+                                  },
+                                  "Padding": "1,0,0,0",
+                                  "automationPeer": {
+                                    "name": "Root Item 1",
+                                    "controlType": "TreeItem",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "SelectionItem_Select",
+                                      "SelectionItem_AddToSelection",
+                                      "SelectionItem_RemoveFromSelection",
+                                      "SelectionItem_Status",
+                                      "ExpandCollapse_Expand",
+                                      "ExpandCollapse_Collapse",
+                                      "ExpandCollapse_Toggle",
+                                      "ExpandCollapse_Status"
+                                    ]
+                                  },
+                                  "childCount": 2,
+                                  "children": [
+                                    {
+                                      "type": "System.Windows.Controls.TreeViewItem",
+                                      "hashCode": 63830089,
+                                      "Header": "Child 1.1",
+                                      "HorizontalContentAlignment": {
+                                        "type": "binding",
+                                        "path": "HorizontalContentAlignment",
+                                        "mode": "Default",
+                                        "relativeSource": "FindAncestor",
+                                        "resolvedValue": "Left"
+                                      },
+                                      "VerticalContentAlignment": {
+                                        "type": "binding",
+                                        "path": "VerticalContentAlignment",
+                                        "mode": "Default",
+                                        "relativeSource": "FindAncestor",
+                                        "resolvedValue": "Center"
+                                      },
+                                      "Padding": "1,0,0,0",
+                                      "automationPeer": {
+                                        "name": "Child 1.1",
+                                        "controlType": "TreeItem",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "SelectionItem_Select",
+                                          "SelectionItem_AddToSelection",
+                                          "SelectionItem_RemoveFromSelection",
+                                          "SelectionItem_Status",
+                                          "ExpandCollapse_Expand",
+                                          "ExpandCollapse_Collapse",
+                                          "ExpandCollapse_Toggle",
+                                          "ExpandCollapse_Status"
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "type": "System.Windows.Controls.TreeViewItem",
+                                      "hashCode": 37599894,
+                                      "IsExpanded": true,
+                                      "Header": "Child 1.2",
+                                      "HorizontalContentAlignment": {
+                                        "type": "binding",
+                                        "path": "HorizontalContentAlignment",
+                                        "mode": "Default",
+                                        "relativeSource": "FindAncestor",
+                                        "resolvedValue": "Left"
+                                      },
+                                      "VerticalContentAlignment": {
+                                        "type": "binding",
+                                        "path": "VerticalContentAlignment",
+                                        "mode": "Default",
+                                        "relativeSource": "FindAncestor",
+                                        "resolvedValue": "Center"
+                                      },
+                                      "Padding": "1,0,0,0",
+                                      "automationPeer": {
+                                        "name": "Child 1.2",
+                                        "controlType": "TreeItem",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "SelectionItem_Select",
+                                          "SelectionItem_AddToSelection",
+                                          "SelectionItem_RemoveFromSelection",
+                                          "SelectionItem_Status",
+                                          "ExpandCollapse_Expand",
+                                          "ExpandCollapse_Collapse",
+                                          "ExpandCollapse_Toggle",
+                                          "ExpandCollapse_Status"
+                                        ]
+                                      },
+                                      "childCount": 1,
+                                      "children": [
+                                        {
+                                          "type": "System.Windows.Controls.TreeViewItem",
+                                          "hashCode": 2854726,
+                                          "Header": "Grandchild 1.2.1",
+                                          "HorizontalContentAlignment": {
+                                            "type": "binding",
+                                            "path": "HorizontalContentAlignment",
+                                            "mode": "Default",
+                                            "relativeSource": "FindAncestor",
+                                            "resolvedValue": "Left"
+                                          },
+                                          "VerticalContentAlignment": {
+                                            "type": "binding",
+                                            "path": "VerticalContentAlignment",
+                                            "mode": "Default",
+                                            "relativeSource": "FindAncestor",
+                                            "resolvedValue": "Center"
+                                          },
+                                          "Padding": "1,0,0,0",
+                                          "automationPeer": {
+                                            "name": "Grandchild 1.2.1",
+                                            "controlType": "TreeItem",
+                                            "isOffscreen": true,
+                                            "supportedActions": [
+                                              "SelectionItem_Select",
+                                              "SelectionItem_AddToSelection",
+                                              "SelectionItem_RemoveFromSelection",
+                                              "SelectionItem_Status",
+                                              "ExpandCollapse_Expand",
+                                              "ExpandCollapse_Collapse",
+                                              "ExpandCollapse_Toggle",
+                                              "ExpandCollapse_Status"
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "System.Windows.Controls.TreeViewItem",
+                                  "hashCode": 25692540,
+                                  "Header": "Root Item 2",
+                                  "HorizontalContentAlignment": {
+                                    "type": "binding",
+                                    "path": "HorizontalContentAlignment",
+                                    "mode": "Default",
+                                    "relativeSource": "FindAncestor",
+                                    "resolvedValue": "Left"
+                                  },
+                                  "VerticalContentAlignment": {
+                                    "type": "binding",
+                                    "path": "VerticalContentAlignment",
+                                    "mode": "Default",
+                                    "relativeSource": "FindAncestor",
+                                    "resolvedValue": "Center"
+                                  },
+                                  "Padding": "1,0,0,0",
+                                  "automationPeer": {
+                                    "name": "Root Item 2",
+                                    "controlType": "TreeItem",
+                                    "isOffscreen": true,
+                                    "supportedActions": [
+                                      "SelectionItem_Select",
+                                      "SelectionItem_AddToSelection",
+                                      "SelectionItem_RemoveFromSelection",
+                                      "SelectionItem_Status",
+                                      "ExpandCollapse_Expand",
+                                      "ExpandCollapse_Collapse",
+                                      "ExpandCollapse_Toggle",
+                                      "ExpandCollapse_Status"
+                                    ]
+                                  },
+                                  "childCount": 2,
+                                  "children": [
+                                    {
+                                      "type": "System.Windows.Controls.TreeViewItem",
+                                      "hashCode": 29906272,
+                                      "Header": "Child 2.1",
+                                      "HorizontalContentAlignment": {
+                                        "type": "binding",
+                                        "path": "HorizontalContentAlignment",
+                                        "mode": "Default",
+                                        "relativeSource": "FindAncestor",
+                                        "resolvedValue": "Left"
+                                      },
+                                      "VerticalContentAlignment": {
+                                        "type": "binding",
+                                        "path": "VerticalContentAlignment",
+                                        "mode": "Default",
+                                        "relativeSource": "FindAncestor",
+                                        "resolvedValue": "Center"
+                                      },
+                                      "Padding": "1,0,0,0",
+                                      "automationPeer": {
+                                        "name": "Child 2.1",
+                                        "controlType": "TreeItem",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "SelectionItem_Select",
+                                          "SelectionItem_AddToSelection",
+                                          "SelectionItem_RemoveFromSelection",
+                                          "SelectionItem_Status",
+                                          "ExpandCollapse_Expand",
+                                          "ExpandCollapse_Collapse",
+                                          "ExpandCollapse_Toggle",
+                                          "ExpandCollapse_Status"
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "type": "System.Windows.Controls.TreeViewItem",
+                                      "hashCode": 720995,
+                                      "Header": "Child 2.2",
+                                      "HorizontalContentAlignment": {
+                                        "type": "binding",
+                                        "path": "HorizontalContentAlignment",
+                                        "mode": "Default",
+                                        "relativeSource": "FindAncestor",
+                                        "resolvedValue": "Left"
+                                      },
+                                      "VerticalContentAlignment": {
+                                        "type": "binding",
+                                        "path": "VerticalContentAlignment",
+                                        "mode": "Default",
+                                        "relativeSource": "FindAncestor",
+                                        "resolvedValue": "Center"
+                                      },
+                                      "Padding": "1,0,0,0",
+                                      "automationPeer": {
+                                        "name": "Child 2.2",
+                                        "controlType": "TreeItem",
+                                        "isOffscreen": true,
+                                        "supportedActions": [
+                                          "SelectionItem_Select",
+                                          "SelectionItem_AddToSelection",
+                                          "SelectionItem_RemoveFromSelection",
+                                          "SelectionItem_Status",
+                                          "ExpandCollapse_Expand",
+                                          "ExpandCollapse_Collapse",
+                                          "ExpandCollapse_Toggle",
+                                          "ExpandCollapse_Status"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "System.Windows.Controls.TabItem",
+                  "hashCode": 31470215,
+                  "Header": "Text \u0026 Input",
+                  "Content": {
+                    "Type": "System.Windows.Controls.StackPanel",
+                    "HashCode": 6488958
+                  },
+                  "Padding": "6,2,6,2",
+                  "childCount": 1,
+                  "children": [
+                    {
+                      "type": "System.Windows.Controls.StackPanel",
+                      "hashCode": 6488958,
+                      "Margin": "10,10,10,10",
+                      "childCount": 7,
+                      "children": [
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 58400626,
+                          "Text": "Text Input Controls",
+                          "Margin": "5,5,5,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBox",
+                          "hashCode": 55843593,
+                          "Text": "Single line TextBox",
+                          "Width": 300,
+                          "Margin": "5,5,5,5",
+                          "HorizontalAlignment": "Left",
+                          "automationPeer": {
+                            "controlType": "Edit",
+                            "isOffscreen": true,
+                            "supportedActions": [
+                              "Value_Get",
+                              "Value_Set"
+                            ]
+                          }
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBox",
+                          "hashCode": 27037160,
+                          "Text": "Password TextBox",
+                          "Width": 300,
+                          "Margin": "5,5,5,5",
+                          "HorizontalAlignment": "Left",
+                          "automationPeer": {
+                            "controlType": "Edit",
+                            "isOffscreen": true,
+                            "supportedActions": [
+                              "Value_Get",
+                              "Value_Set"
+                            ]
+                          }
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 42007851,
+                          "Text": "Multi-line TextBox:",
+                          "Margin": "5,5,5,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBox",
+                          "hashCode": 42526340,
+                          "Text": "This is a multi-line TextBox.\nYou can enter multiple lines of text here.\nIt supports word wrapping and scrolling.",
+                          "Width": 400,
+                          "Height": 100,
+                          "Margin": "5,5,5,5",
+                          "HorizontalAlignment": "Left",
+                          "automationPeer": {
+                            "controlType": "Edit",
+                            "isOffscreen": true,
+                            "supportedActions": [
+                              "Value_Get",
+                              "Value_Set"
+                            ]
+                          }
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 47192740,
+                          "Text": "RichTextBox:",
+                          "Margin": "5,5,5,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.RichTextBox",
+                          "hashCode": 22081476,
+                          "Width": 400,
+                          "MinWidth": 10,
+                          "Height": 100,
+                          "Margin": "5,5,5,5",
+                          "HorizontalAlignment": "Left",
+                          "childCount": 1,
+                          "children": [
+                            {
+                              "type": "System.Windows.Documents.FlowDocument",
+                              "hashCode": 64515557,
+                              "IsEnabled": false,
+                              "childCount": 1,
+                              "children": [
+                                {
+                                  "type": "System.Windows.Documents.Paragraph",
+                                  "hashCode": 43769104,
+                                  "Margin": "Auto,Auto,Auto,Auto",
+                                  "IsEnabled": false,
+                                  "childCount": 9,
+                                  "children": [
+                                    {
+                                      "type": "System.Windows.Documents.Run",
+                                      "hashCode": 58377623,
+                                      "Text": "This is a ",
+                                      "IsEnabled": false
+                                    },
+                                    {
+                                      "type": "System.Windows.Documents.Bold",
+                                      "hashCode": 55636561,
+                                      "IsEnabled": false,
+                                      "childCount": 1,
+                                      "children": [
+                                        {
+                                          "type": "System.Windows.Documents.Run",
+                                          "hashCode": 30967009,
+                                          "Text": "RichTextBox",
+                                          "IsEnabled": false
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "System.Windows.Documents.Run",
+                                      "hashCode": 10267631,
+                                      "Text": " with ",
+                                      "IsEnabled": false
+                                    },
+                                    {
+                                      "type": "System.Windows.Documents.Italic",
+                                      "hashCode": 25299820,
+                                      "IsEnabled": false,
+                                      "childCount": 1,
+                                      "children": [
+                                        {
+                                          "type": "System.Windows.Documents.Run",
+                                          "hashCode": 26371793,
+                                          "Text": "formatted",
+                                          "IsEnabled": false
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "System.Windows.Documents.Run",
+                                      "hashCode": 36019552,
+                                      "Text": " text.",
+                                      "IsEnabled": false
+                                    },
+                                    {
+                                      "type": "System.Windows.Documents.LineBreak",
+                                      "hashCode": 55740512,
+                                      "IsEnabled": false
+                                    },
+                                    {
+                                      "type": "System.Windows.Documents.Run",
+                                      "hashCode": 31902563,
+                                      "Text": "It supports ",
+                                      "IsEnabled": false
+                                    },
+                                    {
+                                      "type": "System.Windows.Documents.Underline",
+                                      "hashCode": 18687619,
+                                      "IsEnabled": false,
+                                      "childCount": 1,
+                                      "children": [
+                                        {
+                                          "type": "System.Windows.Documents.Run",
+                                          "hashCode": 33970848,
+                                          "Text": "rich formatting",
+                                          "IsEnabled": false
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "System.Windows.Documents.Run",
+                                      "hashCode": 37302179,
+                                      "Text": ".",
+                                      "IsEnabled": false
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "System.Windows.Controls.TabItem",
+                  "hashCode": 14796483,
+                  "Header": "DataGrid \u0026 Validation",
+                  "Content": {
+                    "Type": "System.Windows.Controls.Grid",
+                    "HashCode": 175293
+                  },
+                  "Padding": "6,2,6,2",
+                  "childCount": 1,
+                  "children": [
+                    {
+                      "type": "System.Windows.Controls.Grid",
+                      "hashCode": 175293,
+                      "Margin": "10,10,10,10",
+                      "childCount": 8,
+                      "children": [
+                        {
+                          "type": "System.Windows.Controls.RowDefinition",
+                          "hashCode": 1577639,
+                          "Height": "Auto"
+                        },
+                        {
+                          "type": "System.Windows.Controls.RowDefinition",
+                          "hashCode": 14198754
+                        },
+                        {
+                          "type": "System.Windows.Controls.RowDefinition",
+                          "hashCode": 60679928,
+                          "Height": "Auto"
+                        },
+                        {
+                          "type": "System.Windows.Controls.RowDefinition",
+                          "hashCode": 9248440,
+                          "Height": "Auto"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 16127101,
+                          "Text": "DataGrid with Data Validation (IDataErrorInfo)",
+                          "Margin": "0,0,0,10"
+                        },
+                        {
+                          "type": "System.Windows.Controls.DataGrid",
+                          "hashCode": 42483779,
+                          "ItemsSource": {
+                            "type": "binding",
+                            "path": "People",
+                            "mode": "Default",
+                            "source": "DataContext",
+                            "resolvedValue": "System.Collections.ObjectModel.ObservableCollection\u00601[TestApp.Person]"
+                          },
+                          "Name": "PersonDataGrid",
+                          "Margin": "5,5,5,5",
+                          "automationPeer": {
+                            "automationId": "PersonDataGrid",
+                            "controlType": "DataGrid",
+                            "isOffscreen": true,
+                            "supportedActions": [
+                              "Selection"
+                            ]
+                          }
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 31226782,
+                          "Text": "Add New Person (Form with Validation)",
+                          "Margin": "0,10,0,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.Grid",
+                          "hashCode": 12605589,
+                          "Row": 3,
+                          "childCount": 18,
+                          "children": [
+                            {
+                              "type": "System.Windows.Controls.ColumnDefinition",
+                              "hashCode": 46341445,
+                              "Width": "Auto"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ColumnDefinition",
+                              "hashCode": 14419821,
+                              "Width": "120"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ColumnDefinition",
+                              "hashCode": 62669527,
+                              "Width": "Auto"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ColumnDefinition",
+                              "hashCode": 27154837,
+                              "Width": "120"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ColumnDefinition",
+                              "hashCode": 43066942,
+                              "Width": "Auto"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ColumnDefinition",
+                              "hashCode": 52058165,
+                              "Width": "80"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ColumnDefinition",
+                              "hashCode": 65870306,
+                              "Width": "Auto"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ColumnDefinition",
+                              "hashCode": 55961846,
+                              "Width": "200"
+                            },
+                            {
+                              "type": "System.Windows.Controls.ColumnDefinition",
+                              "hashCode": 33894570,
+                              "Width": "Auto"
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 36615679,
+                              "Text": "First Name:",
+                              "Margin": "5,5,5,5",
+                              "VerticalAlignment": "Center"
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBox",
+                              "hashCode": 61105663,
+                              "Text": {
+                                "type": "binding",
+                                "path": "FirstName",
+                                "mode": "Default",
+                                "source": "DataContext",
+                                "hasError": true,
+                                "error": "First name is required",
+                                "hasValidationError": true,
+                                "resolvedValue": ""
+                              },
+                              "Name": "FirstNameTextBox",
+                              "Margin": "5,5,5,5",
+                              "automationPeer": {
+                                "automationId": "FirstNameTextBox",
+                                "controlType": "Edit",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "Value_Get",
+                                  "Value_Set"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 13080057,
+                              "Text": "Last Name:",
+                              "Margin": "5,5,5,5",
+                              "VerticalAlignment": "Center"
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBox",
+                              "hashCode": 50611656,
+                              "Text": {
+                                "type": "binding",
+                                "path": "LastName",
+                                "mode": "Default",
+                                "source": "DataContext",
+                                "resolvedValue": ""
+                              },
+                              "Name": "LastNameTextBox",
+                              "Margin": "5,5,5,5",
+                              "automationPeer": {
+                                "automationId": "LastNameTextBox",
+                                "controlType": "Edit",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "Value_Get",
+                                  "Value_Set"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 52851724,
+                              "Text": "Age:",
+                              "Margin": "5,5,5,5",
+                              "VerticalAlignment": "Center"
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBox",
+                              "hashCode": 5903470,
+                              "Text": {
+                                "type": "binding",
+                                "path": "Age",
+                                "mode": "Default",
+                                "source": "DataContext",
+                                "resolvedValue": "0"
+                              },
+                              "Name": "AgeTextBox",
+                              "Margin": "5,5,5,5",
+                              "automationPeer": {
+                                "automationId": "AgeTextBox",
+                                "controlType": "Edit",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "Value_Get",
+                                  "Value_Set"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBlock",
+                              "hashCode": 53131231,
+                              "Text": "Email:",
+                              "Margin": "5,5,5,5",
+                              "VerticalAlignment": "Center"
+                            },
+                            {
+                              "type": "System.Windows.Controls.TextBox",
+                              "hashCode": 8419032,
+                              "Text": {
+                                "type": "binding",
+                                "path": "Email",
+                                "mode": "Default",
+                                "source": "DataContext",
+                                "hasError": true,
+                                "error": "Valid email is required",
+                                "hasValidationError": true,
+                                "resolvedValue": ""
+                              },
+                              "Name": "EmailTextBox",
+                              "Margin": "5,5,5,5",
+                              "automationPeer": {
+                                "automationId": "EmailTextBox",
+                                "controlType": "Edit",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "Value_Get",
+                                  "Value_Set"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "System.Windows.Controls.Button",
+                              "hashCode": 8662426,
+                              "Content": "Add Person",
+                              "Padding": "10,5,10,5",
+                              "Margin": "10,5,10,5",
+                              "automationPeer": {
+                                "name": "Add Person",
+                                "controlType": "Button",
+                                "isOffscreen": true,
+                                "supportedActions": [
+                                  "Invoke_Invoke"
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "System.Windows.Controls.TabItem",
+                  "hashCode": 66059488,
+                  "Header": "Instructions",
+                  "Content": {
+                    "Type": "System.Windows.Controls.StackPanel",
+                    "HashCode": 10852974
+                  },
+                  "Padding": "6,2,6,2",
+                  "childCount": 1,
+                  "children": [
+                    {
+                      "type": "System.Windows.Controls.StackPanel",
+                      "hashCode": 10852974,
+                      "Margin": "20,20,20,20",
+                      "childCount": 8,
+                      "children": [
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 30567910,
+                          "Text": "Injection Testing Instructions",
+                          "Margin": "5,5,5,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 6675738,
+                          "Text": "This enhanced WPF application is used to test the WpfInspector injection with various controls.",
+                          "Margin": "0,0,0,10"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 60081642,
+                          "Text": "Steps:",
+                          "Margin": "5,5,5,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 3863873,
+                          "Text": "1. Keep this application running",
+                          "Margin": "0,0,0,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 34774863,
+                          "Text": "2. Note the Process ID displayed in the Basic Controls tab",
+                          "Margin": "0,0,0,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 44538317,
+                          "Text": "3. Run the Injector with this Process ID: Injector.exe [ProcessId]",
+                          "Margin": "0,0,0,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 65300541,
+                          "Text": "4. The injector should inject WpfInspector and receive a \u0022PONG\u0022 response to its \u0022PING\u0022",
+                          "Margin": "0,0,0,5"
+                        },
+                        {
+                          "type": "System.Windows.Controls.TextBlock",
+                          "hashCode": 50833958,
+                          "Text": "5. Test various controls across different tabs to verify inspection capabilities",
+                          "Margin": "0,10,0,5"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "System.Windows.Controls.StackPanel",
+              "hashCode": 54852443,
+              "Margin": "10,10,10,10",
+              "childCount": 2,
+              "children": [
+                {
+                  "type": "System.Windows.Controls.TextBlock",
+                  "hashCode": 23909939,
+                  "Text": {
+                    "type": "binding",
+                    "path": "StatusMessage",
+                    "mode": "Default",
+                    "source": "DataContext",
+                    "resolvedValue": "Ready"
+                  },
+                  "Margin": "5,5,5,5",
+                  "HorizontalAlignment": "Center"
+                },
+                {
+                  "type": "System.Windows.Controls.TextBlock",
+                  "hashCode": 13862865,
+                  "Text": "Ready for injection testing with enhanced WPF controls...",
+                  "Margin": "5,5,5,5",
+                  "HorizontalAlignment": "Center"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dataContexts": {
+    "dc_11809597": {
+      "type": "TestApp.PersonViewModel",
+      "hashCode": 11809597,
+      "properties": {
+        "People": {
+          "isReadOnly": false,
+          "value": "ObservableCollection\u00601",
+          "propertyType": "ObservableCollection\u003CPerson\u003E"
+        },
+        "FirstName": {
+          "isReadOnly": false,
+          "value": "",
+          "propertyType": "String"
+        },
+        "LastName": {
+          "isReadOnly": false,
+          "value": "",
+          "propertyType": "String"
+        },
+        "Age": {
+          "isReadOnly": false,
+          "value": 0,
+          "propertyType": "Int32"
+        },
+        "Email": {
+          "isReadOnly": false,
+          "value": "",
+          "propertyType": "String"
+        },
+        "Error": {
+          "isReadOnly": true,
+          "value": "",
+          "propertyType": "String"
+        },
+        "StatusMessage": {
+          "isReadOnly": false,
+          "value": "Ready",
+          "propertyType": "String"
+        },
+        "ClearDataCommand": {
+          "isReadOnly": true,
+          "value": "RelayCommand",
+          "propertyType": "ICommand"
+        },
+        "AddSampleDataCommand": {
+          "isReadOnly": true,
+          "value": "RelayCommand",
+          "propertyType": "ICommand"
+        },
+        "ShowInfoCommand": {
+          "isReadOnly": true,
+          "value": "RelayCommand",
+          "propertyType": "ICommand"
+        },
+        "ResetFormCommand": {
+          "isReadOnly": true,
+          "value": "RelayCommand",
+          "propertyType": "ICommand"
+        }
+      },
+      "toString": "TestApp.PersonViewModel"
+    }
+  },
+  "timestamp": "2025-08-03 00:53:43 UTC"
+}

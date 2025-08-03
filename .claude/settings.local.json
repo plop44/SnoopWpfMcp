@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(mv:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:devblogs.microsoft.com)",
+      "Bash(rm:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(dotnet test:*)",
+      "Bash(verbosity=detailed)",
+      "Bash(cat:*)"
+    ],
+    "deny": []
+  }
+}

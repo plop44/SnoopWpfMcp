@@ -6,7 +6,7 @@ This project has been transformed from a simple console injector into a Model Co
 
 The communication flow is:
 ```
-AI Agent <=> MCP Server (Injector project) <=> WPF Application
+AI Agent <=> MCP Server (SnoopWpfMcpServer project) <=> WPF Application
 ```
 
 ## Available MCP Functions
@@ -36,12 +36,6 @@ AI Agent <=> MCP Server (Injector project) <=> WPF Application
   - Error information (if any)
   - Whether injection was already done
 
-### 3. `get_process_info`
-- **Description**: Gets detailed information about a specific process by Process ID
-- **Parameters**:
-  - `processId` (integer): The Process ID to get information about
-- **Returns**: JSON object with detailed process information
-
 ## How It Works
 
 1. **Process Discovery**: The server scans running processes to identify WPF applications by checking for loaded WPF assemblies and main windows.
@@ -55,7 +49,7 @@ AI Agent <=> MCP Server (Injector project) <=> WPF Application
 ## Running the MCP Server
 
 ```bash
-dotnet run --project MCP/Injector/Injector.csproj
+dotnet run --project MCP/Injector/SnoopWpfMcpServer.csproj
 ```
 
 The server will start and listen for JSON-RPC requests on stdin/stdout, following the MCP protocol.
@@ -70,7 +64,7 @@ Example MCP configuration entry:
   "mcpServers": {
     "wpf-inspector": {
       "command": "dotnet",
-      "args": ["run", "--project", "path/to/MCP/Injector/Injector.csproj"],
+      "args": ["run", "--project", "path/to/MCP/Injector/SnoopWpfMcpServer.csproj"],
       "env": {}
     }
   }
